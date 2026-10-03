@@ -154,6 +154,16 @@ A second cold read of the revised sections led to these fixes:
 - **Old exports.** They are kept and drive the sanity checks. A refused export falls back to the previous one without blocking other sets.
 - **Inference.** Format comes from owner config, not inference. Set inference runs the join chain against the configured sets. The export date fallback is the commit that added the file.
 
+## Revision 3: daily fetch for active sets
+
+At the owner's request, the pipeline now fetches 17Lands data itself for sets that 17Lands labels active.
+
+- **Active list.** `GET /data/filters` → `live_formats_by_expansion`. On 2026-10-03 it was `{"Cube - Powered": ["PremierDraft"], "FRA": ["PremierDraft", "TradDraft", "PickTwoDraft", "Sealed", "TradSealed", "ArenaDirect_Sealed"], "WOE": ["QuickDraft"]}`. The same response's `start_dates` gives Arena release dates.
+- **Which sets.** A pool set is fetched when its configured format is live for it and its embargo has passed. On 2026-10-03 that's nothing until 2026-10-12, then FRA Premier Draft. WOE is live only in Quick Draft, so its frozen Premier Draft data still comes from the export.
+- **Request.** One `GET /api/card_data?expansion=…&event_type=…&time_period=ALL_TIME` per set per day, from the scheduled job only. It is sequential, uses a descriptive User-Agent, stops on a 429 or error, and has a kill switch.
+- **Precision.** Fetched rows are full precision and carry `mtga_id`, so grades match the site exactly and the join uses `arena_id` directly.
+- **Exports.** Manual CSV exports remain the source for inactive sets and the fallback when the fetch is off.
+
 ## Colleague test (revision 1)
 
 A fresh agent read the first draft cold as the implementing engineer and listed ambiguities, contradictions and gaps. Revision 2 superseded the items about public-data files, the dormant adapter and pick-order-as-stretch. The revisions that came out of it:

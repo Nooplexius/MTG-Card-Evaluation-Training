@@ -2,9 +2,9 @@
 
 Written for Claude Opus 5.5 at Max effort, running as a coding agent in this repository (Cursor agent or Cloud Agent, or Claude Code). Paste everything inside the fenced block below as one message. The data-source facts in it were checked against the live sources on 2026-10-03; the evidence is in [`RESEARCH_NOTES.md`](./RESEARCH_NOTES.md).
 
-## Before you run it: export the 17Lands data
+## Before you run it: export the inactive sets once
 
-The app gets its 17Lands numbers from the Card Data page's CSV export, which you download by hand. The prompt tells the agent never to call 17Lands' site or API; the only 17Lands file it downloads is their public `cards.csv`, which it uses to match card names. For each set below:
+Once a day, the pipeline downloads 17Lands data itself for **active sets**, the sets 17Lands lists as currently running events on Arena. It starts 13 days after a set's Arena release and makes one request per set. Inactive sets have stopped changing, so export each of them once by hand from the Card Data page:
 
 1. Open the link. It opens the Table view with every column group turned on.
 2. Leave the filters at their defaults: time period All time, all users, no color, rarity, or deck filters.
@@ -13,8 +13,8 @@ The app gets its 17Lands numbers from the Card Data page's CSV export, which you
 Put the downloaded files in `data/17lands/` and commit them.
 - Keep the downloaded file names, because the date in them is the export date.
 - Keep old exports rather than overwriting them; the importer compares each new export with the previous one.
-- Re-export sets released in the last 8 weeks about weekly. Older sets' data stops changing, and the status command tells you which sets need a refresh.
-- This repository is public. Commit a new set's export only on or after its embargo date (Arena release + 13 days), so its data isn't published early.
+- WOE is live on Arena only in Quick Draft, so its Premier Draft data still comes from your export.
+- The status command tells you if a set is missing or stale.
 
 | Set | Export link |
 | --- | --- |
@@ -36,7 +36,7 @@ Put the downloaded files in `data/17lands/` and commit them.
 | SOS | [Premier Draft](https://www.17lands.com/card_data?expansion=SOS&format=PremierDraft&view=table&columns=seen,picked,played,opening,drawn,everInHand,notSeen,improvement) |
 | MSH | [Premier Draft](https://www.17lands.com/card_data?expansion=MSH&format=PremierDraft&view=table&columns=seen,picked,played,opening,drawn,everInHand,notSeen,improvement) |
 | HOB | [Premier Draft](https://www.17lands.com/card_data?expansion=HOB&format=PremierDraft&view=table&columns=seen,picked,played,opening,drawn,everInHand,notSeen,improvement) |
-| FRA | [Premier Draft](https://www.17lands.com/card_data?expansion=FRA&format=PremierDraft&view=table&columns=seen,picked,played,opening,drawn,everInHand,notSeen,improvement). Export and commit it on or after 2026-10-12 (17Lands' embargo). |
+| FRA | No export needed. FRA is active, so the pipeline fetches it daily from 2026-10-12, when 17Lands' embargo ends. |
 
 If some exports are missing when you run the prompt, the agent builds with what's there and lists the missing sets. If none are present, it builds on synthetic sample files and reports that it's waiting for your exports.
 
@@ -72,15 +72,23 @@ Limited players (draft and sealed on MTG Arena) who know the rules and want an e
 </requirements>
 
 <data_sources>
-These facts were true on 2026-10-03. Sources change: check Scryfall and the Standard list live before relying on them, and where something no longer holds, trust what you observe, adapt, and note it in DECISIONS.md. For 17Lands, my exports are the only evidence.
+These facts were true on 2026-10-03. Sources change: check Scryfall and the Standard list live before relying on them, and where something no longer holds, trust what you observe, adapt, and note it in DECISIONS.md.
 
-17Lands: my Card Data exports are the source of truth
-- I download each set's data from the Table view of 17Lands' Card Data page using Export data → Download as CSV, and commit the files to data/17lands/. I keep the site's file names (card-ratings-YYYY-MM-DD.csv, sometimes with a " (1)" suffix) and keep old exports. The link I use has this pattern:
+17Lands: two sources, one normalized format
+- Daily fetch for active sets. 17Lands labels which sets are active, meaning currently running events on Arena: GET https://www.17lands.com/data/filters returns live_formats_by_expansion. On 2026-10-03 it listed FRA (PremierDraft, TradDraft, PickTwoDraft, Sealed, TradSealed, ArenaDirect_Sealed), WOE (QuickDraft) and Cube - Powered (PremierDraft). Once per day, the scheduled pipeline (never users' browsers):
+  - reads that list;
+  - for every pool set whose configured format is listed as live and whose embargo has passed, makes one GET to the request the Card Data page itself uses: https://www.17lands.com/api/card_data?expansion={EXP}&event_type={FORMAT}&time_period=ALL_TIME. On 2026-10-03 that means nothing until FRA's embargo ends on 2026-10-12, then FRA Premier Draft daily. WOE is live only in Quick Draft, so its Premier Draft data stays as exported.
+  - The response is {copyright, notes, data}. Each data row has name, mtga_id, color, rarity, and the export's metrics at full precision (seen_count, avg_seen, pick_count, avg_pick, game_count, play_rate, win_rate, opening_hand_game_count, opening_hand_win_rate, drawn_game_count, drawn_win_rate, ever_drawn_game_count, ever_drawn_win_rate, never_drawn_game_count, never_drawn_win_rate, drawn_improvement_win_rate). Win rates are null below 500 games in hand.
+  - Requests run one at a time with a descriptive User-Agent that includes the app's URL. On a 429 or any error, stop for the day, keep the last good data, and flag it.
+  - 17Lands' usage guidelines discourage automated access without their permission, so put this behind a config switch (autoFetch17Lands, on). If they ever ask, I turn it off and the app falls back to manual exports.
+  - Store each day's response as a snapshot on a data branch and treat it like an export: same validation, with the previous snapshot or export as "previous". When a set stops being active, its last snapshot is its final data.
+  - During development, make at most one live request per endpoint and format you need, and save the responses as test fixtures. Tests and CI never call 17Lands.
+- Manual exports for everything else. I download each set's data from the Table view of 17Lands' Card Data page using Export data → Download as CSV, and commit the files to data/17lands/. I keep the site's file names (card-ratings-YYYY-MM-DD.csv, sometimes with a " (1)" suffix) and keep old exports. The link I use has this pattern:
   https://www.17lands.com/card_data?expansion={EXP}&format={FORMAT}&view=table&columns=seen,picked,played,opening,drawn,everInHand,notSeen,improvement
-- Don't fetch anything from 17Lands' site or API, whether from code or from a browser. Their usage guidelines discourage automated access, and the export button is the intended path. The one 17Lands file the pipeline may download is cards.csv from their public datasets (see the join below).
-  - If a Standard-legal limited set has no valid export, build without it and list it with its link.
-  - If data/17lands/ is empty or missing, build and test on synthetic exports in the documented format, skip the deploy, and report that you're waiting for my exports.
-- File format (generated in the browser by the site):
+- Apart from those two requests and the public cards.csv (see the join below), don't fetch anything from 17Lands.
+  - If a Standard-legal limited set has no valid data, build without it and list it with its export link.
+  - If there's no 17Lands data at all, build and test on synthetic data in the documented formats, skip the deploy, and report that you're waiting for my exports.
+- Manual export file format (generated in the browser by the site):
   - UTF-8 with a BOM, comma-separated, every field double-quoted.
   - Header, with all column groups on: Name, Color, Rarity, # Seen, ALSA, # Picked, ATA, # GP, % GP, GP WR, # OH, OH WR, # GD, GD WR, # GIH, GIH WR, # GNS, GNS WR, IIH.
   - Value formats: win rates like "55.5%" (one decimal), IIH like "2.4pp", ALSA/ATA like "5.66", counts as integers.
@@ -88,22 +96,22 @@ These facts were true on 2026-10-03. Sources change: check Scryfall and the Stan
   - A blank win rate means 17Lands hides it (fewer than 500 games in hand).
   - Names are front-face only (no " // ").
   - Only Name, # GIH and GIH WR are required; every other column group is optional, so degrade gracefully. On phones the page defaults to just Seen, Picked and IIH, which is why the link sets columns.
-- The file carries no set code, format, or date, so get them elsewhere:
+- A manual export carries no set code, format, or date, so get them elsewhere:
   - Set: run the join chain (below) against each candidate limited set, meaning the sets in the release-date config. Choose the unique candidate where at least 90% of rows match.
   - Format: from a small per-set config that I own (PremierDraft by default, PickTwoDraft for OM1). A file name may override it only with an exact 17Lands event name.
   - Export date: from the card-ratings-YYYY-MM-DD part of the name, otherwise the commit that added the file (check out with full history).
-  - Use the newest valid export per set and format. When two share a date, take the one with the larger # GIH total.
-- Validate each export against the previous one, meaning the newest older valid export of the same set and format. Refuse an export with a clear message unless it:
-  - has the required columns;
+  - Use the newest valid data per set and format, from either source. When two share a date, take the one with the larger # GIH total.
+- Validate each export or snapshot against the previous one, meaning the newest older valid data for the same set and format. Refuse it with a clear message unless it:
+  - has the required columns or fields;
   - contains cards of every color plus multicolor and colorless, and of all four rarities. A color- or rarity-filtered export won't. Don't use Scryfall's booster flag as a denominator: it's false for every OM1 printing, and set:tmt is:booster returns nothing.
   - has at least 95% as many rows as the previous export, if there is one;
   - has a set-average GIH WR (the grade population's unweighted mean) between 52% and 61%, and within 1.5 points of the previous export (a user-group or deck-color filter shifts it);
   - has a total # GIH no smaller than the previous export's (a shrinking total means a period other than "All time" was selected).
-  A refused file is skipped: the set keeps its previous valid export, the status output flags it, and the pipeline still builds and deploys everything else.
+  Refused data is skipped: the set keeps its previous valid data, the status output flags it, and the pipeline still builds and deploys everything else.
 - Freshness and status:
-  - Show each set's export date in the app.
-  - Provide a status command that lists every Standard-legal limited set (bonus sheets folded in, SPM mapped to OM1) with its state and reason: live, held back (embargo, missing release date, fewer than 15 graded cards), missing, refused, or stale.
-  - An export is stale when it's older than 7 days for a set released in the last 8 weeks. Older sets don't go stale by default (configurable), because their all-time data stops changing.
+  - Show each set's data date in the app.
+  - Provide a status command that lists every Standard-legal limited set (bonus sheets folded in, SPM mapped to OM1) with its state and reason: live, held back (embargo, missing release date, fewer than 15 graded cards), missing, refused, fetch failed, or stale.
+  - An active set is stale when its newest data is more than 2 days old, meaning the daily fetch is failing or switched off. Inactive sets never go stale, because their all-time data has stopped changing.
   - The status command prints the export link for every set that isn't live and fresh.
 
 17Lands: terms for this use (from 17lands.com/usage_guidelines)
@@ -112,14 +120,14 @@ These facts were true on 2026-10-03. Sources change: check Scryfall and the Stan
   - Implement it as eligibility from 00:00 UTC on Arena release + 13 days (Arena releases are Tuesdays). It's on by default and stricter than my 7-day rule.
   - Keep both rules as config: minDaysLive = 7, respect17LandsEmbargo = true. Turning the embargo off is for local or private builds; the public deployment keeps it on.
   - Held-back sets produce no deployed files.
-- No source you're allowed to use gives Arena release dates, so keep them in a small committed config. A set with an export but no release date is held back and flagged. Seed it with: WOE 2023-09-05, LCI 2023-11-14, MKM 2024-02-06, OTJ 2024-04-16, BLB 2024-07-30, DSK 2024-09-24, FDN 2024-11-12, DFT 2025-02-11, TDM 2025-04-08, FIN 2025-06-10, EOE 2025-07-29, OM1 2025-09-23, TLA 2025-11-18, ECL 2026-01-20, TMT 2026-03-03, SOS 2026-04-21, MSH 2026-06-23, HOB 2026-08-11, FRA 2026-09-29.
+- Arena release dates come from start_dates in the same /data/filters response. Keep a small committed config as the fallback for when the fetch is off. A set with data but no release date is held back and flagged. Seed the config with: WOE 2023-09-05, LCI 2023-11-14, MKM 2024-02-06, OTJ 2024-04-16, BLB 2024-07-30, DSK 2024-09-24, FDN 2024-11-12, DFT 2025-02-11, TDM 2025-04-08, FIN 2025-06-10, EOE 2025-07-29, OM1 2025-09-23, TLA 2025-11-18, ECL 2026-01-20, TMT 2026-03-03, SOS 2026-04-21, MSH 2026-06-23, HOB 2026-08-11, FRA 2026-09-29.
 
 The grade
 - 17Lands' Card Data page has an official Grades view; replicate its formula exactly:
-  - Population: every card in the set's export that has a GIH WR. mean = unweighted mean of those GIH WRs; sd = population standard deviation (divide by n); require n ≥ 15.
+  - Population: every card in the set's data that has a GIH WR. mean = unweighted mean of those GIH WRs; sd = population standard deviation (divide by n); require n ≥ 15.
   - z = (GIH WR − mean) / sd; t = floor(3 · (z + 11/6)); grade = [F, D-, D, D+, C-, C, C+, B-, B, B+, A-, A, A+][t], with t < 0 → F and t ≥ 12 → A+.
   - Each step is 1/3 SD: C covers z in [−1/6, +1/6), A+ starts at z = 13/6, F is z < −1.5. Grades are relative to a set and format; color or rarity filters never change a grade.
-- The export rounds win rates to 0.1 points, so about 1–2% of cards land one step off the site's own Grades view (TLA: 4 of 295). That's acceptable; don't try to correct it.
+- Fetched data has full precision, so its grades match the site's Grades view exactly. Manual exports round win rates to 0.1 points, so about 1–2% of their cards land one step off (TLA: 4 of 295). That's acceptable; don't try to correct it.
 - Label grades with source and window, for example "17Lands Card Data · TLA Premier Draft · all time through Oct 3, 2026".
 
 Which sets
@@ -139,7 +147,7 @@ Scryfall
 - Pipeline: use bulk data. GET https://api.scryfall.com/bulk-data lists files with jsonl_download_uri (gzipped JSON Lines) and compressed_size: default_cards (~80 MB) for printings, oracle_tags (~6 MB) for functional tags, and art_tags if you support art searches. The *.scryfall.io file hosts have no rate limit.
 - API: send an accurate User-Agent (scripts: "AppName/version"; in the browser, leave the browser's own) and an Accept header. /cards/search, /cards/named, /cards/random and /cards/collection allow 2 requests per second; most other endpoints allow 10. A 429 locks you out for 30 seconds, so back off and never retry in a loop. Cache responses for at least 24 hours. CORS is open. Unknown search keywords are ignored with a warning (HTTP 200, `warnings`); syntax errors return 400 with `details`.
 - Join chain from an exported card name to a Scryfall card:
-  1. Name → 17Lands' public cards.csv (https://17lands-public.s3.amazonaws.com/analysis_data/cards/cards.csv; columns id = MTGA id, expansion, name, rarity, color_identity, mana_value, types, is_booster; one name can have several ids) rows for the set and its bonus codes → MTGA ids → Scryfall arena_id. Verified: 97274 → Aang's Journey in tla; 98622 → Teferi's Protection in tle.
+  1. MTGA id → Scryfall arena_id. Fetched rows carry mtga_id. For manual exports, look the name up in 17Lands' public cards.csv (https://17lands-public.s3.amazonaws.com/analysis_data/cards/cards.csv; columns id = MTGA id, expansion, name, rarity, color_identity, mana_value, types, is_booster; one name can have several ids), using the rows for the set and its bonus codes. Verified: 97274 → Aang's Journey in tla; 98622 → Teferi's Protection in tle.
   2. Otherwise, name, front-face name, or printed_name within the set's Scryfall codes (the main set plus sets whose parent_set_code is the main set).
   3. Otherwise, exact name or front-face name among Arena printings anywhere, for cross-set bonus sheets like SPG and OMB.
   Report anything still unmatched; the target is zero.
@@ -271,10 +279,10 @@ Visual design
 
 <persistence>
 - Local-first in IndexedDB (Dexie is a good fit), with no account needed. Store:
-  - evaluations (timestamp; card key; user grade; the actual grade, GIH WR, #GIH, set mean/SD, ALSA, ATA and crowd-gap class at that moment; export date; mode; selection reason and probability; active filter; response time; first-look flag; session id);
+  - evaluations (timestamp; card key; user grade; the actual grade, GIH WR, #GIH, set mean/SD, ALSA, ATA and crowd-gap class at that moment; data date and source; mode; selection reason and probability; active filter; response time; first-look flag; session id);
   - the Scryfall-searchable fields plus oracle-tag slugs for every evaluated card, which keeps history filterable by every Scryfall characteristic even after rotation;
   - the exposure log, scheduler state, sessions, saved filters, and settings.
-- When a new export changes a card's grade, keep the stored snapshot; analytics use the latest grade by default and mark changed items.
+- When new data changes a card's grade, keep the stored snapshot; analytics use the latest grade by default and mark changed items.
 - Rotated sets leave the practice pool but stay in history and stats.
 - Version the schema, with migrations, from the first release.
 - Durability: call navigator.storage.persist(). iOS Safari can delete a site's storage after seven days of Safari use without a visit unless the site is installed to the Home Screen. So make the app an installable PWA, prompt iOS users to install after their first session, and provide JSON export/import with an occasional backup reminder.
@@ -296,7 +304,8 @@ Defaults; change one only with a reason recorded in DECISIONS.md:
   - a daily schedule, which picks up Scryfall updates, rotation, and sets whose embargo has ended.
   
   Each run:
-  - validates the exports;
+  - fetches the active sets (once per day, as described in <data_sources>);
+  - validates the exports and snapshots;
   - joins them to Scryfall bulk data and oracle tags;
   - applies the Standard and live-time rules;
   - computes grades;
@@ -321,7 +330,7 @@ When trade-offs come up: data correctness and source terms > speed and feel of t
 </priorities>
 
 <how_to_work>
-- Before building on Scryfall or the Standard list, check them live (fetch the Scryfall bulk-data index, the Standard list, and a HEAD of cards.csv). Use the exports in data/17lands/ as your 17Lands samples.
+- Before building on Scryfall or the Standard list, check them live (fetch the Scryfall bulk-data index, the Standard list, and a HEAD of cards.csv). For 17Lands samples, use my exports plus the fixtures from your few development requests.
 - Keep PLAN.md as your checklist (milestones → tasks with status) and DECISIONS.md for judgment calls. Commit after each meaningful step with a clear message, and keep the app runnable at every commit.
 - Write tests for the logic the app's credibility rests on:
   - the export importer:
@@ -329,6 +338,11 @@ When trade-offs come up: data correctness and source terms > speed and feel of t
     - refusals: filtered or partial exports, the 52–61% and 1.5-point checks, a shrinking # GIH;
     - inference: set (including OM1's Marvel names), format override, export date, and picking the newest export with its tie-break;
     - a refused export falling back to the previous valid one;
+  - the daily fetch, using fixtures only:
+    - active-set selection from live_formats_by_expansion, including a set that's live only in a different format;
+    - the embargo, and one request per set per day;
+    - stopping on a 429 or an error, and the kill switch;
+    - API rows normalized to the same schema as exports;
   - grade band boundaries (z exactly on a band edge) and the 15-card minimum;
   - set eligibility with date fixtures: FRA on 2026-10-03 → held back; on 2026-10-12 → included; with the embargo off → included from 2026-10-06; an export without a release date → held back;
   - the status command's states and staleness rules;
@@ -348,6 +362,7 @@ When trade-offs come up: data correctness and source terms > speed and feel of t
 <definition_of_done>
 - From a clean checkout, documented commands install the app, build the data from the exports, run the app locally, and pass all tests.
 - The pool contains every live set (18 on 2026-10-03, once the exports are in), with zero unmatched cards or each exception listed with a reason. Grades follow the 17Lands formula, and the status command reports every Standard-legal limited set's state with links for the ones that aren't live and fresh.
+- The daily job fetches active sets exactly as specified, and is tested with fixtures.
 - The Playwright mobile run meets the budgets above. Every discrete action has sound and motion feedback, and nothing is drawn over the card image during practice.
 - Filters accept Scryfall syntax with Scryfall-equal results over the pool (the differential corpus passes), and the same filter drives practice, stats, history, and drills.
 - Stats and smart feedback work on real usage, the simulation thresholds pass, and every card-facet insight leads to a drill.
@@ -359,7 +374,7 @@ When trade-offs come up: data correctness and source terms > speed and feel of t
 <final_report>
 When you finish, lead with what was built. Then cover:
 - how to run, test, and deploy it, and how to add or refresh exports;
-- what the data contained on the run date: sets, formats, export dates, and card counts, plus exclusions and why, including missing or stale exports with their links;
+- what the data contained on the run date: sets, formats, sources (fetched or exported), data dates, and card counts, plus exclusions and why, including missing or stale data with its export links;
 - any deviations from this brief and why;
 - known limitations.
 Keep it brief. If your environment supports it, attach screenshots or a short recording of the core loop at 390×844.
