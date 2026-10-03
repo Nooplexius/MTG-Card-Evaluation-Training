@@ -1,0 +1,1306 @@
+{
+  "$schema": "https://whatsinstandard.com/api/v6/schema.json",
+  "deprecated": false,
+  "sets": [
+    {
+      "name": "Kaladesh",
+      "codename": "Lock",
+      "code": "KLD",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=KLD",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=KLD",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=KLD",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=KLD"
+      },
+      "enterDate": {
+        "exact": "2016-09-30T00:00:00.000",
+        "rough": "September 2016"
+      },
+      "exitDate": {
+        "exact": "2018-10-05T00:00:00.000",
+        "rough": "Q4 2018"
+      }
+    },
+    {
+      "name": "Aether Revolt",
+      "codename": "Stock",
+      "code": "AER",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=AER",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=AER",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=AER",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=AER"
+      },
+      "enterDate": {
+        "exact": "2017-01-20T00:00:00.000",
+        "rough": "January 2017"
+      },
+      "exitDate": {
+        "exact": "2018-10-05T00:00:00.000",
+        "rough": "Q4 2018"
+      }
+    },
+    {
+      "name": "Amonkhet",
+      "codename": "Barrel",
+      "code": "AKH",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=AKH",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=AKH",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=AKH",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=AKH"
+      },
+      "enterDate": {
+        "exact": "2017-04-28T00:00:00.000",
+        "rough": "April 2017"
+      },
+      "exitDate": {
+        "exact": "2018-10-05T00:00:00.000",
+        "rough": "Q4 2018"
+      }
+    },
+    {
+      "name": "Welcome Deck 2017",
+      "codename": null,
+      "code": "W17",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=W17",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=W17",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=W17",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=W17"
+      },
+      "enterDate": {
+        "exact": "2017-04-28T00:00:00.000",
+        "rough": "April 2017"
+      },
+      "exitDate": {
+        "exact": "2018-10-05T00:00:00.000",
+        "rough": "Q4 2018"
+      }
+    },
+    {
+      "name": "Hour of Devastation",
+      "codename": "Laughs",
+      "code": "HOU",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=HOU",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=HOU",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=HOU",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=HOU"
+      },
+      "enterDate": {
+        "exact": "2017-07-14T00:00:00.000",
+        "rough": "July 2017"
+      },
+      "exitDate": {
+        "exact": "2018-10-05T00:00:00.000",
+        "rough": "Q4 2018"
+      }
+    },
+    {
+      "name": "Ixalan",
+      "codename": "Ham",
+      "code": "XLN",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=XLN",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=XLN",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=XLN",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=XLN"
+      },
+      "enterDate": {
+        "exact": "2017-09-29T00:00:00.000",
+        "rough": "September 2017"
+      },
+      "exitDate": {
+        "exact": "2019-10-04T00:00:00.000",
+        "rough": "Q4 2019"
+      }
+    },
+    {
+      "name": "Rivals of Ixalan",
+      "codename": "Eggs",
+      "code": "RIX",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=RIX",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=RIX",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=RIX",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=RIX"
+      },
+      "enterDate": {
+        "exact": "2018-01-19T00:00:00.000",
+        "rough": "January 2018"
+      },
+      "exitDate": {
+        "exact": "2019-10-04T00:00:00.000",
+        "rough": "Q4 2019"
+      }
+    },
+    {
+      "name": "Dominaria",
+      "codename": "Soup",
+      "code": "DOM",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=DOM",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=DOM",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=DOM",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=DOM"
+      },
+      "enterDate": {
+        "exact": "2018-04-27T00:00:00.000",
+        "rough": "April 2018"
+      },
+      "exitDate": {
+        "exact": "2019-10-04T00:00:00.000",
+        "rough": "Q4 2019"
+      }
+    },
+    {
+      "name": "Core Set 2019",
+      "codename": "Salad",
+      "code": "M19",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=M19",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=M19",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=M19",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=M19"
+      },
+      "enterDate": {
+        "exact": "2018-07-13T00:00:00.000",
+        "rough": "July 2018"
+      },
+      "exitDate": {
+        "exact": "2019-10-04T00:00:00.000",
+        "rough": "Q4 2019"
+      }
+    },
+    {
+      "name": "Guilds of Ravnica",
+      "codename": "Spaghetti",
+      "code": "GRN",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=GRN",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=GRN",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=GRN",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=GRN"
+      },
+      "enterDate": {
+        "exact": "2018-10-05T00:00:00.000",
+        "rough": "October 2018"
+      },
+      "exitDate": {
+        "exact": "2020-09-25T00:00:00.000",
+        "rough": "Q4 2020"
+      }
+    },
+    {
+      "name": "Ravnica Allegiance",
+      "codename": "Meatballs",
+      "code": "RNA",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=RNA",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=RNA",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=RNA",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=RNA"
+      },
+      "enterDate": {
+        "exact": "2019-01-25T00:00:00.000",
+        "rough": "January 2019"
+      },
+      "exitDate": {
+        "exact": "2020-09-25T00:00:00.000",
+        "rough": "Q4 2020"
+      }
+    },
+    {
+      "name": "War of the Spark",
+      "codename": "Milk",
+      "code": "WAR",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=WAR",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=WAR",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=WAR",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=WAR"
+      },
+      "enterDate": {
+        "exact": "2019-05-03T00:00:00.000",
+        "rough": "May 2019"
+      },
+      "exitDate": {
+        "exact": "2020-09-25T00:00:00.000",
+        "rough": "Q4 2020"
+      }
+    },
+    {
+      "name": "Core Set 2020",
+      "codename": null,
+      "code": "M20",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=M20",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=M20",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=M20",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=M20"
+      },
+      "enterDate": {
+        "exact": "2019-07-12T00:00:00.000",
+        "rough": "July 2019"
+      },
+      "exitDate": {
+        "exact": "2020-09-25T00:00:00.000",
+        "rough": "Q4 2020"
+      }
+    },
+    {
+      "name": "Throne of Eldraine",
+      "codename": "Archery",
+      "code": "ELD",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=ELD",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=ELD",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=ELD",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=ELD"
+      },
+      "enterDate": {
+        "exact": "2019-10-04T00:00:00.000",
+        "rough": "October 2019"
+      },
+      "exitDate": {
+        "exact": "2021-09-24T00:00:00.000",
+        "rough": "Q3 2021"
+      }
+    },
+    {
+      "name": "Theros: Beyond Death",
+      "codename": "Baseball",
+      "code": "THB",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=THB",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=THB",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=THB",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=THB"
+      },
+      "enterDate": {
+        "exact": "2020-01-24T00:00:00.000",
+        "rough": "January 2020"
+      },
+      "exitDate": {
+        "exact": "2021-09-24T00:00:00.000",
+        "rough": "Q3 2021"
+      }
+    },
+    {
+      "name": "Ikoria: Lair of Behemoths",
+      "codename": "Cricket",
+      "code": "IKO",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=IKO",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=IKO",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=IKO",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=IKO"
+      },
+      "enterDate": {
+        "exact": "2020-04-24T00:00:00.000",
+        "rough": "April 2020"
+      },
+      "exitDate": {
+        "exact": "2021-09-24T00:00:00.000",
+        "rough": "Q3 2021"
+      }
+    },
+    {
+      "name": "Core Set 2021",
+      "codename": null,
+      "code": "M21",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=M21",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=M21",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=M21",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=M21"
+      },
+      "enterDate": {
+        "exact": "2020-07-03T00:00:00.000",
+        "rough": "Q3 2020"
+      },
+      "exitDate": {
+        "exact": "2021-09-24T00:00:00.000",
+        "rough": "Q3 2021"
+      }
+    },
+    {
+      "name": "Zendikar Rising",
+      "codename": "Diving",
+      "code": "ZNR",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=ZNR",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=ZNR",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=ZNR",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=ZNR"
+      },
+      "enterDate": {
+        "exact": "2020-09-25T00:00:00.000",
+        "rough": "Q4 2020"
+      },
+      "exitDate": {
+        "exact": "2022-09-09T00:00:00.000",
+        "rough": "Q3 2022"
+      }
+    },
+    {
+      "name": "Kaldheim",
+      "codename": "Equestrian",
+      "code": "KHM",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=KHM",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=KHM",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=KHM",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=KHM"
+      },
+      "enterDate": {
+        "exact": "2021-02-05T00:00:00.000",
+        "rough": "Q1 2021"
+      },
+      "exitDate": {
+        "exact": "2022-09-09T00:00:00.000",
+        "rough": "Q3 2022"
+      }
+    },
+    {
+      "name": "Strixhaven: School of Mages",
+      "codename": "Fencing",
+      "code": "STX",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=STX",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=STX",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=STX",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=STX"
+      },
+      "enterDate": {
+        "exact": "2021-04-23T00:00:00.000",
+        "rough": "Q2 2021"
+      },
+      "exitDate": {
+        "exact": "2022-09-09T00:00:00.000",
+        "rough": "Q3 2022"
+      }
+    },
+    {
+      "name": "Dungeons & Dragons: Adventures in the Forgotten Realms",
+      "codename": "Zebra",
+      "code": "AFR",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=AFR",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=AFR",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=AFR",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=AFR"
+      },
+      "enterDate": {
+        "exact": "2021-07-23T00:00:00.000",
+        "rough": "Q3 2021"
+      },
+      "exitDate": {
+        "exact": "2022-09-09T00:00:00.000",
+        "rough": "Q3 2022"
+      }
+    },
+    {
+      "name": "Innistrad: Midnight Hunt",
+      "codename": "Golf",
+      "code": "MID",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=MID",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=MID",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=MID",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=MID"
+      },
+      "enterDate": {
+        "exact": "2021-09-24T00:00:00.000",
+        "rough": "Q3 2021"
+      },
+      "exitDate": {
+        "exact": "2024-08-02T00:00:00.000",
+        "rough": "Q4 2024"
+      }
+    },
+    {
+      "name": "Innistrad: Crimson Vow",
+      "codename": "Golf",
+      "code": "VOW",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=VOW",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=VOW",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=VOW",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=VOW"
+      },
+      "enterDate": {
+        "exact": "2021-11-19T00:00:00.000",
+        "rough": "Q4 2021"
+      },
+      "exitDate": {
+        "exact": "2024-08-02T00:00:00.000",
+        "rough": "Q4 2024"
+      }
+    },
+    {
+      "name": "Kamigawa: Neon Dynasty",
+      "codename": "Hockey",
+      "code": "NEO",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=NEO",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=NEO",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=NEO",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=NEO"
+      },
+      "enterDate": {
+        "exact": "2022-02-18T00:00:00.000",
+        "rough": "Q1 2022"
+      },
+      "exitDate": {
+        "exact": "2024-08-02T00:00:00.000",
+        "rough": "Q4 2024"
+      }
+    },
+    {
+      "name": "Streets of New Capenna",
+      "codename": "Ice Skating",
+      "code": "SNC",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=SNC",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=SNC",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=SNC",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=SNC"
+      },
+      "enterDate": {
+        "exact": "2022-04-29T00:00:00.000",
+        "rough": "Q2 2022"
+      },
+      "exitDate": {
+        "exact": "2024-08-02T00:00:00.000",
+        "rough": "Q4 2024"
+      }
+    },
+    {
+      "name": "Dominaria United",
+      "codename": "Judo",
+      "code": "DMU",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=DMU",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=DMU",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=DMU",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=DMU"
+      },
+      "enterDate": {
+        "exact": "2022-09-09T00:00:00.000",
+        "rough": "Q3 2022"
+      },
+      "exitDate": {
+        "exact": "2025-07-25T00:00:00.000",
+        "rough": "Q3 2025"
+      }
+    },
+    {
+      "name": "The Brothers' War",
+      "codename": "Kayaking",
+      "code": "BRO",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=BRO",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=BRO",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=BRO",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=BRO"
+      },
+      "enterDate": {
+        "exact": "2022-11-18T00:00:00.000",
+        "rough": "Q4 2022"
+      },
+      "exitDate": {
+        "exact": "2025-07-25T00:00:00.000",
+        "rough": "Q3 2025"
+      }
+    },
+    {
+      "name": "Phyrexia: All Will Be One",
+      "codename": "Lacrosse",
+      "code": "ONE",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=ONE",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=ONE",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=ONE",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=ONE"
+      },
+      "enterDate": {
+        "exact": "2023-02-03T00:00:00.000",
+        "rough": "Q1 2023"
+      },
+      "exitDate": {
+        "exact": "2025-07-25T00:00:00.000",
+        "rough": "Q3 2025"
+      }
+    },
+    {
+      "name": "March of the Machine",
+      "codename": "Marathon",
+      "code": "MOM",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=MOM",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=MOM",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=MOM",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=MOM"
+      },
+      "enterDate": {
+        "exact": "2023-04-14T00:00:00.000",
+        "rough": "Q2 2023"
+      },
+      "exitDate": {
+        "exact": "2025-07-25T00:00:00.000",
+        "rough": "Q3 2025"
+      }
+    },
+    {
+      "name": "March of the Machine: The Aftermath",
+      "codename": "Marathon Epilogue",
+      "code": "MAT",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=MAT",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=MAT",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=MAT",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=MAT"
+      },
+      "enterDate": {
+        "exact": "2023-05-12T00:00:00.000",
+        "rough": "Q2 2023"
+      },
+      "exitDate": {
+        "exact": "2025-07-25T00:00:00.000",
+        "rough": "Q3 2025"
+      }
+    },
+    {
+      "name": "Wilds of Eldraine",
+      "codename": "Netball",
+      "code": "WOE",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=WOE",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=WOE",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=WOE",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=WOE"
+      },
+      "enterDate": {
+        "exact": "2023-09-01T00:00:00.000",
+        "rough": "Q3 2023"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2027"
+      }
+    },
+    {
+      "name": "The Lost Caverns of Ixalan",
+      "codename": "Offroading",
+      "code": "LCI",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=LCI",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=LCI",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=LCI",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=LCI"
+      },
+      "enterDate": {
+        "exact": "2023-11-10T00:00:00.000",
+        "rough": "Q4 2023"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2027"
+      }
+    },
+    {
+      "name": "Murders at Karlov Manor",
+      "codename": "Polo",
+      "code": "MKM",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=MKM",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=MKM",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=MKM",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=MKM"
+      },
+      "enterDate": {
+        "exact": "2024-02-02T00:00:00.000",
+        "rough": "Q1 2024"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2027"
+      }
+    },
+    {
+      "name": "Outlaws of Thunder Junction",
+      "codename": "Quilting",
+      "code": "OTJ",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=OTJ",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=OTJ",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=OTJ",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=OTJ"
+      },
+      "enterDate": {
+        "exact": "2024-04-12T00:00:00.000",
+        "rough": "Q2 2024"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2027"
+      }
+    },
+    {
+      "name": "The Big Score",
+      "codename": "Quilting Epilogue",
+      "code": "BIG",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=BIG",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=BIG",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=BIG",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=BIG"
+      },
+      "enterDate": {
+        "exact": "2024-04-12T00:00:00.000",
+        "rough": "Q2 2024"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2027"
+      }
+    },
+    {
+      "name": "Bloomburrow",
+      "codename": "Rugby",
+      "code": "BLB",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=BLB",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=BLB",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=BLB",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=BLB"
+      },
+      "enterDate": {
+        "exact": "2024-08-02T00:00:00.000",
+        "rough": "Q3 2024"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2027"
+      }
+    },
+    {
+      "name": "Duskmourn: House of Horror",
+      "codename": "Swimming",
+      "code": "DSK",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=DSK",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=DSK",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=DSK",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=DSK"
+      },
+      "enterDate": {
+        "exact": "2024-09-20T00:00:00.000",
+        "rough": "Q3 2024"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2027"
+      }
+    },
+    {
+      "name": "Magic: The Gathering Foundations",
+      "codename": "Farmer",
+      "code": "FDN",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=FDN",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=FDN",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=FDN",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=FDN"
+      },
+      "enterDate": {
+        "exact": "2024-11-08T00:00:00.000",
+        "rough": "Q4 2024"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2030"
+      }
+    },
+    {
+      "name": "Aetherdrift",
+      "codename": "Tennis",
+      "code": "DFT",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=DFT",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=DFT",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=DFT",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=DFT"
+      },
+      "enterDate": {
+        "exact": "2025-02-14T00:00:00.000",
+        "rough": "Q1 2025"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2028"
+      }
+    },
+    {
+      "name": "Tarkir: Dragonstorm",
+      "codename": "Ultimate",
+      "code": "TDM",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=TDM",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=TDM",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=TDM",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=TDM"
+      },
+      "enterDate": {
+        "exact": "2025-04-04T00:00:00.000",
+        "rough": "Q2 2025"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2028"
+      }
+    },
+    {
+      "name": "Magic: The Gathering—FINAL FANTASY",
+      "codename": null,
+      "code": "FIN",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=FIN",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=FIN",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=FIN",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=FIN"
+      },
+      "enterDate": {
+        "exact": "2025-06-06T00:00:00.000",
+        "rough": "Q2 2025"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2028"
+      }
+    },
+    {
+      "name": "Edge of Eternities",
+      "codename": "Volleyball",
+      "code": "EOE",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=EOE",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=EOE",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=EOE",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=EOE"
+      },
+      "enterDate": {
+        "exact": "2025-07-25T00:00:00.000",
+        "rough": "Q3 2025"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2028"
+      }
+    },
+    {
+      "name": "Marvel's Spider-Man",
+      "codename": null,
+      "code": "SPM",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=SPM",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=SPM",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=SPM",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=SPM"
+      },
+      "enterDate": {
+        "exact": "2025-09-19T00:00:00.000",
+        "rough": "Q4 2025"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2028"
+      }
+    },
+    {
+      "name": "Through the Omenpaths",
+      "codename": null,
+      "code": "OM1",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=OM1",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=OM1",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=OM1",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=OM1"
+      },
+      "enterDate": {
+        "exact": "2025-09-23T00:00:00.000",
+        "rough": "Q4 2025"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2028"
+      }
+    },
+    {
+      "name": "Avatar: The Last Airbender",
+      "codename": null,
+      "code": "TLA",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=TLA",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=TLA",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=TLA",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=TLA"
+      },
+      "enterDate": {
+        "exact": "2025-11-14T00:00:00.000",
+        "rough": "Q4 2025"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2028"
+      }
+    },
+    {
+      "name": "Lorwyn Eclipsed",
+      "codename": "Wrestling",
+      "code": "ECL",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=ECL",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=ECL",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=ECL",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=ECL"
+      },
+      "enterDate": {
+        "exact": "2026-01-16T00:00:00.000",
+        "rough": "Q1 2026"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2029"
+      }
+    },
+    {
+      "name": "Magic: The Gathering® | Teenage Mutant Ninja Turtles",
+      "codename": null,
+      "code": "TMT",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=TMT",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=TMT",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=TMT",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=TMT"
+      },
+      "enterDate": {
+        "exact": "2026-02-27T00:00:00.000",
+        "rough": "Q1 2026"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2029"
+      }
+    },
+    {
+      "name": "Secrets of Strixhaven",
+      "codename": "Yachting",
+      "code": "SOS",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=SOS",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=SOS",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=SOS",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=SOS"
+      },
+      "enterDate": {
+        "exact": "2026-04-17T00:00:00.000",
+        "rough": "April 2026"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2029"
+      }
+    },
+    {
+      "name": "Magic: The Gathering® | Marvel Super Heroes",
+      "codename": "Ziplining",
+      "code": "MSH",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=MSH",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=MSH",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=MSH",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=MSH"
+      },
+      "enterDate": {
+        "exact": "2026-06-19T00:00:00.000",
+        "rough": "June 2026"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2029"
+      }
+    },
+    {
+      "name": "Magic: The Gathering® | The Hobbit™",
+      "codename": null,
+      "code": "HOB",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=HOB",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=HOB",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=HOB",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=HOB"
+      },
+      "enterDate": {
+        "exact": "2026-08-07T00:00:00.000",
+        "rough": "August 2026"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2029"
+      }
+    },
+    {
+      "name": "Reality Fracture",
+      "codename": null,
+      "code": "FRA",
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=FRA",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=FRA",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=FRA",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=FRA"
+      },
+      "enterDate": {
+        "exact": "2026-09-25T00:00:00.000",
+        "rough": "September 2026"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2029"
+      }
+    },
+    {
+      "name": "Magic: The Gathering® | Star Trek™",
+      "codename": null,
+      "code": null,
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=null",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=null",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=null",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=null"
+      },
+      "enterDate": {
+        "exact": "2026-11-13T00:00:00.000",
+        "rough": "November 2026"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2029"
+      }
+    },
+    {
+      "name": "Nauctis: The Sunken Realm",
+      "codename": null,
+      "code": null,
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=null",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=null",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=null",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=null"
+      },
+      "enterDate": {
+        "exact": "2027-01-29T00:00:00.000",
+        "rough": "January 2027"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2030"
+      }
+    },
+    {
+      "name": "UUB1",
+      "codename": null,
+      "code": null,
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=null",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=null",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=null",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=null"
+      },
+      "enterDate": {
+        "exact": "2027-04-02T00:00:00.000",
+        "rough": "January 2027"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2030"
+      }
+    },
+    {
+      "name": "Kamigawa: Titanbreach",
+      "codename": null,
+      "code": null,
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=null",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=null",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=null",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=null"
+      },
+      "enterDate": {
+        "exact": "2027-05-28T00:00:00.000",
+        "rough": "May 2027"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2030"
+      }
+    },
+    {
+      "name": "UUB2",
+      "codename": null,
+      "code": null,
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=null",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=null",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=null",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=null"
+      },
+      "enterDate": {
+        "exact": "2027-07-31T00:00:00.000",
+        "rough": "July 2027"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2030"
+      }
+    },
+    {
+      "name": "Zhalfir",
+      "codename": null,
+      "code": null,
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=null",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=null",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=null",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=null"
+      },
+      "enterDate": {
+        "exact": "2027-09-24T00:00:00.000",
+        "rough": "September 2027"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2030"
+      }
+    },
+    {
+      "name": "UUB3",
+      "codename": null,
+      "code": null,
+      "symbol": {
+        "common": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=C&set=null",
+        "uncommon": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=U&set=null",
+        "rare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=R&set=null",
+        "mythicRare": "http://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&size=large&rarity=M&set=null"
+      },
+      "enterDate": {
+        "exact": "2027-11-12T00:00:00.000",
+        "rough": "November 2027"
+      },
+      "exitDate": {
+        "exact": null,
+        "rough": "Q1 2030"
+      }
+    }
+  ],
+  "bans": [
+    {
+      "cardName": "Oko, Thief of Crowns",
+      "cardImageUrl": "https://img.scryfall.com/cards/png/front/3/4/3462a3d0-5552-49fa-9eb7-100960c55891.png",
+      "setCode": "ELD",
+      "reason": "Banned for its power level being higher than is healthy for current and future Standard metagame environments.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/november-18-2019-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Once Upon a Time",
+      "cardImageUrl": "https://img.scryfall.com/cards/png/front/4/0/4034e5ba-9974-43e3-bde7-8d9b4586c3a4.png",
+      "setCode": "ELD",
+      "reason": "Banned for contributing to a high consistency of strong starts for green, providing a level of early mana fixing that other colors don't have access to.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/november-18-2019-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Fires of Invention",
+      "cardImageUrl": "https://img.scryfall.com/cards/png/front/a/1/a12b16b0-f75f-42d8-9b24-947c1908e0f7.png",
+      "setCode": "ELD",
+      "reason": "Banned for introducing too many risks and design constraints to the future of Standard.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/june-1-2020-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Cauldron Familiar",
+      "cardImageUrl": "https://img.scryfall.com/cards/png/front/9/a/9a539a23-8383-4525-82dd-acfe1d219fe9.png",
+      "setCode": "ELD",
+      "reason": "Banned for reducing metagame diversity and for being cumbersome to play against.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/august-8-2020-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Uro, Titan of Nature's Wrath",
+      "cardImageUrl": "https://c1.scryfall.com/file/scryfall-cards/png/front/a/0/a0b6a71e-56cb-4d25-8f2b-7a4f1b60900d.png",
+      "setCode": "THB",
+      "reason": "Banned for weakening four-colour ramp decks.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/september-28-2020-banned-and-restricted-announcement-2020-09-28"
+    },
+    {
+      "cardName": "Omnath, Locus of Creation",
+      "cardImageUrl": "https://c1.scryfall.com/file/scryfall-cards/large/front/4/e/4e4fb50c-a81f-44d3-93c5-fa9a0b37f617.jpg?1602499748",
+      "setCode": "ZNR",
+      "reason": "Banned for being too strong in four-color ramp decks.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/october-12-2020-banned-and-restricted-announcement?adf"
+    },
+    {
+      "cardName": "Lucky Clover",
+      "cardImageUrl": "https://c1.scryfall.com/file/scryfall-cards/large/front/4/b/4b5d23a6-3a23-4169-aea1-f10bf5153180.jpg?1602499760",
+      "setCode": "ELD",
+      "reason": "Banned for being a powerful and difficult-to-interact-with part of Adventure decks.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/october-12-2020-banned-and-restricted-announcement?adf"
+    },
+    {
+      "cardName": "Escape to the Wilds",
+      "cardImageUrl": "https://c1.scryfall.com/file/scryfall-cards/large/front/3/e/3e26c10b-179f-4a6e-bc8d-3ec1d6783fb9.jpg?1602499769",
+      "setCode": "ELD",
+      "reason": "Banned for being a unique and powerful bridge between strong ramp enablers and powerful payoffs.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/october-12-2020-banned-and-restricted-announcement?adf"
+    },
+    {
+      "cardName": "Alrund's Epiphany",
+      "cardImageUrl": "https://c1.scryfall.com/file/scryfall-cards/large/front/c/9/c94fcb53-a7bd-4a80-a536-9fb0eb24261a.jpg?1643112377",
+      "setCode": "KHM",
+      "reason": "Banned for being too strong in blue control decks and reducing format diversity.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/january-25-2022-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Divide by Zero",
+      "cardImageUrl": "https://c1.scryfall.com/file/scryfall-cards/large/front/1/9/1958d96e-ec44-48ab-80b1-5b01a24ac7b8.jpg?1643112390",
+      "setCode": "STX",
+      "reason": "Banned for being too strong in blue control decks and reducing format diversity.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/january-25-2022-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Faceless Haven",
+      "cardImageUrl": "https://c1.scryfall.com/file/scryfall-cards/large/front/e/3/e3cd82e5-6072-4334-a493-01ca4ad6b4eb.jpg?1643112401",
+      "setCode": "KHM",
+      "reason": "Banned for being too efficient in monocolor aggro decks.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/january-25-2022-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "The Meathook Massacre",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/0/8/08950015-eee5-4327-888c-82dfd13bb9ad.jpg",
+      "setCode": "MID",
+      "reason": "Banned to destabilize black as a prolific foundation for competitive decks.",
+      "announcementUrl": "https://magic.wizards.com/en/articles/archive/news/october-10-2022-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Fable of the Mirror-Breaker // Reflection of Kiki-Jiki",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/2/4/24c0d87b-0049-4beb-b9cb-6f813b7aa7dc.jpg?1685368758",
+      "setCode": "NEO",
+      "reason": "Banned to increase low-mana counterplay options against black-red decks.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/may-29-2023-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Invoke Despair",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/3/5/35af9d5c-4449-4549-b549-c3ba4a67dee0.jpg?1685368727",
+      "setCode": "NEO",
+      "reason": "Banned to increase diversity in black decks and increase counterplay options against removal.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/may-29-2023-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Reckoner Bankbuster",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/2/7/279acd17-6c17-427b-a69d-fc02442ff4a3.jpg?1685368706",
+      "setCode": "NEO",
+      "reason": "Banned to increase diversity of card advantage options among the colors.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/may-29-2023-banned-and-restricted-announcement"
+    },
+    {
+      "cardName": "Hopeless Nightmare",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/2/c/2c2ee817-9ca9-4f09-bc71-7994c19a9470.jpg",
+      "setCode": "WOE",
+      "reason": "Banned to remove the unfun play patterns it creates in self-bounce decks.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-june-30-2025"
+    },
+    {
+      "cardName": "Monstrous Rage",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/e/e/eef5a0ae-5907-42c9-a097-3f973737e392.jpg",
+      "setCode": "WOE",
+      "reason": "Banned to reduce the amount of early pressure created by red aggro decks.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-june-30-2025"
+    },
+    {
+      "cardName": "Up the Beanstalk",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/2/d/2d5e991f-23b2-4db0-a452-7755125b1fd2.jpg",
+      "setCode": "WOE",
+      "reason": "Banned to remove a significantly higher power card from current and future Standard metagame environments.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-june-30-2025"
+    },
+    {
+      "cardName": "Abuelo's Awakening",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/f/9/f93b725e-2b9c-4830-ac54-b2562afe09bb.jpg",
+      "setCode": "LCI",
+      "reason": "Banned to prevent players cheating Omniscience into play as early as turn four.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-june-30-2025"
+    },
+    {
+      "cardName": "This Town Ain't Big Enough",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/b/b/bb206e27-da4d-4abe-9d8c-6d18c5f2f52a.jpg",
+      "setCode": "OTJ",
+      "reason": "Banned to remove the unfun play patterns it creates when paired with Stormchaser's Talent.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-june-30-2025"
+    },
+    {
+      "cardName": "Proft's Eidetic Memory",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/a/f/af5b29b3-974c-4200-8df8-b072c11e1600.jpg",
+      "setCode": "MKM",
+      "reason": "Banned to remove a higher power card from current and future Standard metagame environments.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-november-10-2025"
+    },
+    {
+      "cardName": "Heartfire Hero",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/4/8/48ace959-66b2-40c8-9bff-fd7ed9c99a82.jpg",
+      "setCode": "BLB",
+      "reason": "Banned to reduce the amount of early pressure created by red aggro decks and for its resiliency to many kinds of removal due to its death trigger.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-june-30-2025"
+    },
+    {
+      "cardName": "Screaming Nemesis",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/c/e/ce35e6fb-ff54-44c4-a216-7ddd37f46882.jpg",
+      "setCode": "DSK",
+      "reason": "Banned to power down red aggro decks and allow more deck diversity.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-november-10-2025"
+    },
+    {
+      "cardName": "Cori-Steel Cutter",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/4/9/490eb213-9ae2-4b45-abec-6f1dfc83792a.jpg",
+      "setCode": "TDM",
+      "reason": "Banned to remove a significantly higher power card from current and future Standard metagame environments.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-june-30-2025"
+    },
+    {
+      "cardName": "Vivi Ornitier",
+      "cardImageUrl": "https://cards.scryfall.io/large/front/e/c/ecc1027a-8c07-44a0-bdde-fa2844cff694.jpg",
+      "setCode": "FIN",
+      "reason": "Banned to break up the combo with Agatha's Soul Cauldron.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-november-10-2025"
+    },
+    {
+      "cardName": "Badgermole Cub",
+      "cardImageUrl": "https://cards.scryfall.io/display/front/3/4/340c5799-4964-44dd-8c48-8f3f3aba5211.webp?1786399172",
+      "setCode": "TLA",
+      "reason": "Banned to reduce early mana advantage from a must-answer threat.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-august-10-2026"
+    },
+    {
+      "cardName": "Stormchaser's Talent",
+      "cardImageUrl": "https://cards.scryfall.io/display/front/a/3/a36e682d-b43d-4e08-bf5b-70d7e924dbe5.webp?1786399178",
+      "setCode": "BLB",
+      "reason": "Banned to remove the combination of an early threat with a late game engine from a single card and help counterplay against this blue-red archetype.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-august-10-2026"
+    },
+    {
+      "cardName": "Gran-Gran",
+      "cardImageUrl": "https://cards.scryfall.io/display/front/f/a/fa434b41-e5f7-4989-865a-95db67b05cb1.webp?1786399175",
+      "setCode": "TLA",
+      "reason": "Banned to increase counterplay against the Jeskai lessons deck and to pre-emptively prevent lessons from taking the next top spot.",
+      "announcementUrl": "https://magic.wizards.com/en/news/announcements/banned-and-restricted-august-10-2026"
+    }
+  ]
+}

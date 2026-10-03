@@ -1,0 +1,18 @@
+{
+  "$comment": "Pipeline switches. autoFetch17Lands turns the once-a-day 17Lands fetch for active sets on or off. respect17LandsEmbargo must stay true for the public deployment.",
+  "autoFetch17Lands": true,
+  "minDaysLive": 7,
+  "respect17LandsEmbargo": true,
+  "embargoDays": 13,
+  "minGradedCards": 15,
+  "staleAfterDays": 2,
+  "appName": "Loupe",
+  "appUrl": "https://nooplexius.github.io/MTG-Card-Evaluation-Training/",
+  "validation": {
+    "minRowRatio": 0.95,
+    "meanMin": 0.52,
+    "meanMax": 0.61,
+    "maxMeanShift": 0.015,
+    "minMatchRate": 0.9
+  }
+}
