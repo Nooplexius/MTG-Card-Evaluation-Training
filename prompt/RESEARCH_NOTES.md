@@ -6,27 +6,63 @@ Checked against the live sources on 2026-10-03. Each fact below is something the
 
 | Original spec | Prompt | Reason |
 | --- | --- | --- |
-| "Live data from 17Lands" | Daily pipeline over 17Lands **public datasets**. An optional live-API adapter stays off unless 17Lands grants permission. | 17Lands' card-data API is for on-site use only (see below). As a result, the newest set appears about 5–7 weeks after release. |
-| "Not live for a week → excluded" | Kept. In live-API mode the 17Lands embargo applies instead: day 12 after Arena release. | 17Lands usage guidelines. |
-| "Actual grade (GIH WR)" | 17Lands' own Grades formula, reproduced exactly. | 17Lands now publishes letter grades, so the app's grade *is* the 17Lands grade. |
+| "Live data from 17Lands" | The owner downloads each set's **Card Data CSV export** (current data) and the pipeline ingests it. Code never calls 17Lands' site or API. | The export button is the site's intended path, and the usage guidelines let tools build on that data with credit and an embargo. They discourage automated access. See "Terms" below. |
+| "Not live for a week → excluded" | Kept as a config value, plus 17Lands' embargo (on by default): a new set appears from Arena release + 13 days. | 17Lands asks third-party tools to wait until "the 12th day … (typically the second Monday after the set release)". |
+| "Actual grade (GIH WR)" | 17Lands' own Grades formula, applied to the exported GIH WR. | 17Lands now publishes letter grades, so the app's grade *is* the 17Lands grade, except for about 1–2% of cards affected by export rounding. |
 | "Shows a random card" | Pure-random mode kept. The default is an adaptive mode that is still randomized. | Serves the metagoal (see Learning science). |
 | Accuracy | ±1 step counts as correct for streaks and scheduling. Exact-match rate is reported separately. Analytics are weighted by sample reliability. | A card's grade has sampling noise of about ±1 step for low-sample cards. |
 
 ## 17Lands
 
-- **API is off-limits.** `GET https://www.17lands.com/api/card_data?expansion=TLA&event_type=PremierDraft&time_period=ALL_TIME` returns `{copyright, notes, data}`. The `notes` field says: "This data is only for use on 17Lands.com. The only data permitted for outside use (public or private) is available at 17lands.com/public_datasets." The legacy `/card_ratings/data` endpoint now returns empty or near-empty stats for past sets.
-- **Usage guidelines.** The page is client-rendered, so the text was extracted from the site bundle `/static/Routes.*.bundle.js`. Its points:
-  - Public datasets (typically CC BY 4.0) are out of the guidelines' scope.
-  - Tools must credit 17Lands visibly at the top level with links to the source pages, without implying endorsement.
-  - There is an embargo for third-party tools: no data for a new expansion until "the 12th day it has been released on MTG Arena (typically the second Monday after the set release)", or 7 days for short specialty sets.
-  - Automated scraping is discouraged unless 17Lands gives explicit permission.
+### The Card Data CSV export (the source the prompt uses)
+
+Read from the site bundle `/static/Routes.*.bundle.js`. The export file was simulated from the live data with the same formatting code.
+
+- **Where the button is.** The Card Data page has two views, "Grades" (the default) and "Table". In the Table view, the "Export data" menu offers "Copy to clipboard" and "Download as CSV". The download uses react-csv `CSVLink`, with filename `card-ratings-${yyyy-MM-dd}.csv`.
+- **URL parameters.** `expansion`, `format`, `view=table`, and `columns=` (a comma-separated list of column groups). The time period defaults to `ALL_TIME`.
+- **Column groups.**
+  - The fixed columns are Name, Color and Rarity.
+  - The optional groups are seen (# Seen, ALSA), picked (# Picked, ATA), played (# GP, % GP, GP WR), opening (# OH, OH WR), drawn (# GD, GD WR), everInHand (# GIH, GIH WR), notSeen (# GNS, GNS WR) and improvement (IIH).
+  - By default, desktop shows every group. Phones (detected by user agent) show only seen, picked and improvement, so GIH WR is missing unless `columns=` is set or "Ever in Hand" is ticked.
+- **Which rows.** The export contains the rows currently shown, after the page's color and rarity filters. So a filtered export is partial. User-group, deck-color and date filters change the numbers themselves.
+- **Format.** UTF-8 with a BOM, comma-separated, every field quoted. Win rates look like `55.5%` (one decimal), IIH like `2.4pp`, ALSA/ATA have 2 decimals, and counts are integers. Rarity is the first letter (C/U/R/M). Color is `""`, `"W"`, `"UB"`, and so on. A null value is an empty string; 17Lands hides win rates below about 500 games in hand. Example from TLA:
+
+  ```
+  "Name","Color","Rarity","# Seen","ALSA","# Picked","ATA","# GP","% GP","GP WR","# OH","OH WR","# GD","GD WR","# GIH","GIH WR","# GNS","GNS WR","IIH"
+  "Aang's Journey","","C","309385","5.66","52231","7.80","209231","61.4%","54.3%","38914","54.5%","55182","56.2%","94096","55.5%","113355","53.1%","2.4pp"
+  ```
+- **Rounding.** Computing grades from the export's 0.1-point values changed 4 of 295 TLA grades (1.4%), each by one step, compared with full precision.
+- **OM1 on the site.** It uses the **Marvel** names ("Anti-Venom, Horrifying Healer", "Aunt May"), which match Scryfall's `name` for om1 printings. The public game files use the Arena names instead. Volumes: PickTwoDraft has 185 graded cards and about 3.09M total games in hand; QuickDraft has 172 and about 1.07M. There is no Premier Draft.
+- **Card pages.** The per-card `/card_data/details?card_id=…` route requires a login (`requiredStatus: LoggedIn`). The set-level `/card_data` page is public.
+
+### Terms
+
+- **Terms of Service** (effective 2024-09-12, extracted from the bundle):
+  - "You may not obtain or attempt to obtain any materials or information through any means not intentionally made available or provided for through the Site." The export button is intentionally provided.
+  - The content clauses ("will not modify, publish, transmit … or in any way exploit") apply "Excepted where noted otherwise on specific pages of the Site". The usage guidelines are such a page.
+- **Usage guidelines** (`/usage_guidelines`):
+  - "To be clear, we want people to use and share the numbers on our site."
+  - They apply to curated data (Card Data, Deck Color Data). The public datasets and per-user data are out of scope.
+  - A site or tool that "builds off of our data" must credit 17Lands visibly at the top level, with links to the source pages, without implying endorsement.
+  - Embargo for third-party tools: no data for a new expansion until "the 12th day it has been released on MTG Arena (typically the second Monday after the set release)", or 7 days for short specialty sets.
+  - "We discourage automated scraping of our API" unless 17Lands has given explicit permission.
   - The stated intent is to publish draft data at 2 weeks, game data at 3 weeks, and replay data at 6 weeks.
+- **The API itself.** `GET https://www.17lands.com/api/card_data?expansion=TLA&event_type=PremierDraft&time_period=ALL_TIME` returns `{copyright, notes, data}`. The `notes` field says: "This data is only for use on 17Lands.com. The only data permitted for outside use (public or private) is available at 17lands.com/public_datasets." The legacy `/card_ratings/data` now returns empty or near-empty stats for past sets.
+- **How the prompt reads this.** Code never calls the API, because of the note and the scraping guidance. Data the owner exports through the site's own button is used under the usage guidelines' rules for tools: credit plus the embargo.
+
+### Other facts
 - **Grade formula**, from the same bundle:
   - `ID=["F","D-","D","D+","C-","C","C+","B-","B","B+","A-","A","A+"]`, `HD=2-1/6`, and `t=Math.floor(3*(z+HD))`; `t<0` gives F and `t>=13` gives A+.
   - The stats use the unweighted mean and population SD across cards with a non-null metric, and require n ≥ 15.
   - The site's own note: "assumes a normal distribution centered at C … Each letter gradation … represents a band of 0.33 standard deviations … this most closely matches common usage in the Limited community."
 - **Metric definitions** come from the site's definitions page text. Counts are per copy, and tutored copies are excluded from games drawn and games in hand (since 2022-10-16). On live TLA data, IIH = GIH WR − GNS WR held exactly: 0.55519895 − 0.53112787 = 0.02407108.
 - **The 500-game cutoff.** In live TLA data, the smallest #GIH with a shown win rate was 557 and the largest hidden one was 498.
+- **Arena release dates**, from 17Lands' `/data/filters` `start_dates` (read once for research; these seed the prompt's config): WOE 2023-09-05, LCI 2023-11-14, MKM 2024-02-06, OTJ 2024-04-16, BLB 2024-07-30, DSK 2024-09-24, FDN 2024-11-12, DFT 2025-02-11, TDM 2025-04-08, FIN 2025-06-10, EOE 2025-07-29, OM1 2025-09-23, TLA 2025-11-18, ECL 2026-01-20, TMT 2026-03-03, SOS 2026-04-21, MSH 2026-06-23, HOB 2026-08-11, FRA 2026-09-29.
+
+### Alternative: public datasets
+
+Not used by the prompt; kept in case hands-off data is ever wanted.
+
 - **Public files.** The bucket listing returns 403, but HEAD requests on the URL pattern work. Premier Draft game files, with Arena release and file date:
 
   | Set | Arena release | File posted | Size (MB) |
@@ -50,7 +86,6 @@ Checked against the live sources on 2026-10-03. Each fact below is something the
   | WOE | 2023-09-05 | 2023-10-18 | 82 |
 
   OM1 has no Premier Draft data; its public game files are PickTwoDraft (16 MB), PickTwoTradDraft, Sealed and TradSealed. FRA (Arena release 2026-09-29) has no files yet. `cards.csv` was updated 2026-10-01. A file that doesn't exist returns **403**, not 404, on HEAD (for example OM1 QuickDraft, OM1 TradDraft, FRA PremierDraft).
-- **Card pages.** The per-card route `/card_data/details?card_id=…` sits behind a login (`requiredStatus: LoggedIn` in the bundle). The set-level `/card_data?expansion=…&format=…` page is public.
 - **Validation.** GIH WR was computed from `game_data_public.TMT.PremierDraft` (180,204 games, 2026-03-03 → 2026-04-04) and compared with the live grades:
   - 186 cards had #GIH ≥ 500, with mean 0.5731 and population SD 0.0413.
   - Grades matched 17Lands' live grades exactly for 78.0% of cards and within one step for 100%, with Spearman ρ 0.993.
@@ -73,9 +108,12 @@ Checked against the live sources on 2026-10-03. Each fact below is something the
 - **Images.** `image_uris` now includes WebP variants (`thumb`, `grid`, `display`, `art`, `crop`) alongside `small`, `normal`, `large`, `png`, `art_crop` and `border_crop`. For Aang's Journey, `display` is a 672×936 WebP at 48.6 KB, `large` is a JPEG at 105.6 KB, and `png` is 595 KB.
 - **Search behavior.** An unknown keyword is ignored with a warning: `set:tla foo:bar t:creature` returns 200 with `warnings: ["Invalid expression “foo:bar” was ignored. Unknown keyword “foo”."]`. A syntax error returns 400 with `details` ("Your search contains unclosed parentheses.").
 - **Oracle tags** form a hierarchy (`parent_ids`/`child_ids`). `otag:` includes descendant tags. A local descendant-closure evaluation matched the API exactly on `set:tla` for removal (52), card-advantage (77), combat-trick (11), ramp (46) and lifegain (27).
-- **OM1.** `set:om1` returns 188 printings by default, none with `arena_id`. `name` holds the Marvel name and `printed_name` the Arena name ("Agent Venom" / "Rhilex the Accursed"). The OM1 17Lands file has 227 non-basic cards: 188 match om1 through `printed_name`, and the remaining 39 are in `omb` (parent_set_code `mar`), whose printings do have `arena_id`.
+- **OM1.** `set:om1` returns 188 printings by default, none with `arena_id`. `name` holds the Marvel name and `printed_name` the Arena name ("Agent Venom" / "Rhilex the Accursed").
+  - 17Lands' site, and so its CSV export, uses the Marvel names, which match `name`.
+  - The OM1 public game file uses the Arena names instead. It has 227 non-basic cards: 188 match om1 through `printed_name`, and the other 39 are in `omb` (parent_set_code `mar`), whose printings do have `arena_id`.
 - **Bonus-sheet parents** (`parent_set_code`): tle→tla, pza→tmt, big→otj, otp→otj, fca→fin, soa→sos. The exceptions are omb→mar and spg (no parent).
 - **Dates.** FRA's Scryfall `released_at` is 2026-10-02 (tabletop), while its 17Lands Arena start is 2026-09-29.
+- **The `booster` flag is unreliable** as a set-size denominator. `set:om1` has 188 printings with none flagged booster. `set:tmt is:booster -t:basic` returns 0, while `set:tla is:booster -t:basic` returns 343. The importer detects filtered exports by color and rarity coverage plus row count against the previous export.
 
 ## Standard (via https://whatsinstandard.com/api/v6/standard.json)
 
@@ -83,7 +121,7 @@ On 2026-10-03, Standard was WOE, LCI, MKM, OTJ, BIG, BLB, DSK, FDN, DFT, TDM, FI
 
 The list also contains past sets and future ones with null codes, so filter by date. `enterDate` is the tabletop/prerelease date: FRA's is 2026-09-25, four days before its Arena release, so it can't stand in for the Arena date.
 
-The expected limited pool is 18 sets: all of the above except BIG (folded into OTJ), SPM (covered by OM1) and FRA (too new, no public data).
+The expected limited pool is 18 sets: all of the above except BIG (folded into OTJ), SPM (covered by OM1) and FRA. FRA is held back by 17Lands' embargo until 2026-10-12, or until 2026-10-06 under the 7-day rule alone.
 
 ## Prompt-engineering guidance applied
 
@@ -97,9 +135,28 @@ Sources: Anthropic, [Prompting Claude Opus 5.5](https://platform.claude.com/docs
 - **Frontend defaults.** Opus 5.5 "falls back on a few default styles" and responds to named patterns to avoid. The avoid-list combines Anthropic's examples (cream backgrounds, italic accent words, numbered section labels, monospace labels, pill buttons, generic fonts, purple gradients) with a concrete design direction and a DESIGN.md commitment step.
 - **Structure and tone.** XML-tagged sections, the reasons behind non-obvious rules (so the model generalizes), calm wording instead of all-caps emphasis, and no request to write out reasoning.
 
-## Colleague test
+## Revision 2: owner feedback (CSV exports)
 
-A fresh agent read the draft cold as the implementing engineer and listed ambiguities, contradictions and gaps. The revisions that came out of it:
+The owner pointed out that 17Lands' Card Data page has a CSV download containing GIH WR for each set. The ToS and usage guidelines support using that data in a tool (see "Terms" above), so the prompt changed:
+
+- **Data source.** The owner's exports are the source of 17Lands data. Code never calls 17Lands' site or API; only the public `cards.csv` is downloaded, for the join.
+- **Removed.** The public-dataset pipeline and the dormant live-API adapter. The public datasets are documented here as an alternative.
+- **Importer.** Exports are validated for coverage, required columns, plausible averages, and a # GIH total that never shrinks. Set, format and date are inferred from the file. A status command lists missing or stale exports with direct links.
+- **Embargo.** On by default (Arena release + 13 days), with seeded Arena release dates in config. The 7-day rule is kept as a separate setting.
+- **Drafter sentiment is core.** The export's ALSA/ATA columns move "what drafters think vs. what wins" from a stretch goal into the reveal, and into smart feedback as a "crowd gap" facet.
+- **Formats.** OM1 uses PickTwoDraft. The site's Marvel names for OM1 match Scryfall `name`.
+
+A second cold read of the revised sections led to these fixes:
+
+- **Embargo and the public repo.** Commit a new set's export only on or after its embargo date, because this repo is public. Held-back sets produce no deployed files.
+- **Status command.** It lists every Standard-legal limited set with a state (live, held back, missing, refused, stale), not only eligible ones.
+- **Crowd gap.** It gets local query terms (`crowd:over` / `crowd:under`) so it can drive drills. It is defined as an ALSA-percentile vs. GIH WR-percentile gap of at least 25 points.
+- **Old exports.** They are kept and drive the sanity checks. A refused export falls back to the previous one without blocking other sets.
+- **Inference.** Format comes from owner config, not inference. Set inference runs the join chain against the configured sets. The export date fallback is the commit that added the file.
+
+## Colleague test (revision 1)
+
+A fresh agent read the first draft cold as the implementing engineer and listed ambiguities, contradictions and gaps. Revision 2 superseded the items about public-data files, the dormant adapter and pick-order-as-stretch. The revisions that came out of it:
 
 - **First-look exposure.** First-look is defined through exposure tracking; contrasting cases and lists count as exposure.
 - **Probe cards.** Headline first-look metrics use uniform probe cards, so the adaptive picker doesn't bias them.
