@@ -1,0 +1,36 @@
+{
+  "$comment": "Owner-maintained limited-set config. arenaRelease is the fallback when 17Lands' /data/filters start_dates is unavailable. format is the 17Lands event type the pool uses (PremierDraft unless noted). covers lists Standard set codes drafted inside this Arena limited set. extraBonus lists Scryfall codes of bonus sheets whose parent_set_code is not the main set. scryfall overrides the main Scryfall set code. cardsCsv overrides which 17Lands cards.csv expansions are used for the name to MTGA id lookup.",
+  "defaultFormat": "PremierDraft",
+  "sets": {
+    "WOE": { "arenaRelease": "2023-09-05" },
+    "LCI": { "arenaRelease": "2023-11-14" },
+    "MKM": { "arenaRelease": "2024-02-06" },
+    "OTJ": { "arenaRelease": "2024-04-16" },
+    "BLB": { "arenaRelease": "2024-07-30" },
+    "DSK": { "arenaRelease": "2024-09-24" },
+    "FDN": { "arenaRelease": "2024-11-12" },
+    "DFT": { "arenaRelease": "2025-02-11" },
+    "TDM": { "arenaRelease": "2025-04-08" },
+    "FIN": { "arenaRelease": "2025-06-10" },
+    "EOE": { "arenaRelease": "2025-07-29" },
+    "OM1": {
+      "arenaRelease": "2025-09-23",
+      "format": "PickTwoDraft",
+      "covers": ["SPM"],
+      "extraBonus": ["omb"],
+      "cardsCsv": ["SPM", "OMB"]
+    },
+    "TLA": { "arenaRelease": "2025-11-18" },
+    "ECL": { "arenaRelease": "2026-01-20" },
+    "TMT": { "arenaRelease": "2026-03-03" },
+    "SOS": { "arenaRelease": "2026-04-21" },
+    "MSH": { "arenaRelease": "2026-06-23" },
+    "HOB": { "arenaRelease": "2026-08-11" },
+    "FRA": { "arenaRelease": "2026-09-29" }
+  },
+  "eventTypes": [
+    "PremierDraft", "TradDraft", "QuickDraft", "PickTwoDraft", "Sealed", "TradSealed",
+    "ArenaDirect_Draft", "ArenaDirect_Sealed", "BotDraft", "CompDraft", "ContenderDraft",
+    "CubeSealed", "DraftChallenge", "PickTwoTradDraft"
+  ]
+}
