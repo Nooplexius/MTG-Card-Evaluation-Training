@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0e1311" />
+    <meta name="description" content="Loupe: grade Magic: The Gathering Limited cards on the 17Lands scale, see the real win rate, and learn where your evaluations go wrong." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="preconnect" href="https://cards.scryfall.io" crossorigin />
+    <title>Loupe · Limited card evaluation trainer</title>
+    <script>
+      (function () {
+        var s = /*__STARTERS__*/null;
+        window.__LOUPE_STARTER__ = null;
+        try {
+          if (!s || !s.cards || !s.cards.length || localStorage.getItem('loupe.visited')) return;
+          var c = s.cards[Math.floor(Math.random() * s.cards.length)];
+          var url = 'https://cards.scryfall.io/display/front/' + c.id[0] + '/' + c.id[1] + '/' + c.id + '.webp' + (c.v ? '?' + c.v : '');
+          window.__LOUPE_STARTER__ = { card: c, url: url, hash: s.hash };
+          var l = document.createElement('link');
+          l.rel = 'preload';
+          l.as = 'image';
+          l.href = url;
+          l.crossOrigin = 'anonymous';
+          l.setAttribute('fetchpriority', 'high');
+          document.head.appendChild(l);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Loupe needs JavaScript to run.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
