@@ -19,7 +19,7 @@ const analytics = new Analytics(engine, db());
 const insights = new InsightService(engine, analytics, db());
 let ready: Promise<unknown> | null = null;
 let markInitialized: () => void = () => {};
-/** Resolves once init() has loaded the manifest; calls that need the pool wait for it. */
+/** Resolves once init() has loaded the manifest, tags and scheduler state; every call that needs them waits for it. */
 const initialized = new Promise<void>((r) => (markInitialized = r));
 /** Planning waits for an offline switch in progress, so offline practice never picks an uncached card. */
 let offlinePending: Promise<unknown> = Promise.resolve();
@@ -33,37 +33,46 @@ const api = {
     return manifest;
   },
   async ensureSet(code: string) {
+    await initialized;
     await engine.loadSet(code);
     return true;
   },
   async waitAll() {
+    await initialized;
     await engine.loadAll();
     return engine.pool.entries.length;
   },
   async plan(req: PlanRequest) {
+    await initialized;
     await offlinePending;
     return engine.plan(req);
   },
-  view(key: string) {
+  async view(key: string) {
+    await initialized;
     return engine.view(key);
   },
   async viewWhenReady(key: string) {
+    await initialized;
     const set = key.split(':')[0];
     await engine.loadSet(set);
     return engine.view(key);
   },
-  contrasts(key: string, n: number, avoid: string[]) {
+  async contrasts(key: string, n: number, avoid: string[]) {
+    await initialized;
     return engine.contrasts(key, n, avoid);
   },
-  isExposed(oracleId: string) {
+  async isExposed(oracleId: string) {
+    await initialized;
     return engine.isExposed(oracleId);
   },
   async expose(oracleIds: string[], via: Exposure['via']) {
+    await initialized;
     await engine.expose(oracleIds, via);
     return true;
   },
   /** Stores an evaluation; a first look is the first graded evaluation of an oracle card whose grade was never shown. */
   async saveEvaluation(ev: Evaluation, snapshot: CardSnapshot) {
+    await initialized;
     const firstLook = !engine.isExposed(ev.oracleId);
     const record: Evaluation = { ...ev, firstLook };
     const d = db();
@@ -77,6 +86,7 @@ const api = {
     return { id, firstLook, drill };
   },
   async skip(s: Skip) {
+    await initialized;
     await db().skips.add(s);
     engine.requeue(s.key);
     return true;
@@ -100,6 +110,7 @@ const api = {
   },
   /** Mean error over the five previous sessions, for the session summary's "change vs recent". */
   async summaryExtras(sessionId: string) {
+    await initialized;
     const sessions = (await db().sessions.orderBy('startedAt').reverse().limit(12).toArray()).filter((s) => s.id !== sessionId && s.done > 0).slice(0, 5);
     let sum = 0;
     let n = 0;
@@ -116,6 +127,7 @@ const api = {
     return exportBackup();
   },
   async importBackup(b: unknown) {
+    await initialized;
     const r = await importBackup(b);
     await engine.reloadState();
     return r;
@@ -124,39 +136,48 @@ const api = {
     return typeof navigator.storage?.persist === 'function' ? navigator.storage.persist() : false;
   },
   async practiceQuery(q: string) {
+    await initialized;
     return engine.setPracticeQuery(q, (p) => server.emit('query-progress', p));
   },
   async countQuery(q: string) {
+    await initialized;
     const r = await engine.queryPool(q, (p) => server.emit('query-progress', p));
     return { ...r, matches: null, keys: null };
   },
   async queryKeys(q: string) {
+    await initialized;
     const r = await engine.queryPool(q, (p) => server.emit('query-progress', p));
     return { error: r.error, needsConnection: r.needsConnection, keys: r.keys };
   },
   async stats(p: StatsParams) {
+    await initialized;
     await engine.loadAll();
     return analytics.stats(p);
   },
   async history(p: HistoryParams) {
+    await initialized;
     await engine.loadAll();
     return analytics.history(p);
   },
   async historyCount(q: string) {
+    await initialized;
     const r = await analytics.filtered({ query: q, days: 0, mode: 'all' });
     return { count: r.error || r.needsConnection ? null : r.evals.length, error: r.error, warnings: r.warnings, needsConnection: r.needsConnection };
   },
   async snapshotView(printingId: string, key: string) {
+    await initialized;
     await engine.loadAll();
     const live = engine.view(key);
     if (live) return { view: live, snapshot: null };
     return { view: null, snapshot: (await analytics.snapshot(printingId)) ?? null };
   },
   async insights() {
+    await initialized;
     await engine.loadAll();
     return insights.compute();
   },
   async startDrill(facetId: string) {
+    await initialized;
     return insights.startDrill(facetId);
   },
   async streakInfo() {
