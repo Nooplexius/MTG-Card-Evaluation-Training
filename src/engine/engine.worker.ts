@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { imageUrl } from '../lib/card.ts';
+import type { Manifest } from '../lib/data.ts';
 import { db, exportBackup, importBackup } from '../lib/db.ts';
 import { streaks } from '../lib/analytics.ts';
 import { COMPARE, nextLevel } from '../lib/compare.ts';
@@ -9,11 +10,44 @@ import { Engine, type PlanRequest } from './engine.ts';
 import { InsightService } from './insightService.ts';
 import { serve } from './rpc.ts';
 
+/** Cache names shared with the service worker's runtime caching (vite.config.ts). */
+const MANIFEST_CACHE = 'loupe-manifest';
+const DATA_CACHE = 'loupe-data';
+const isManifestFile = (url: string) => /\/data\/(manifest|status)\.json$/.test(new URL(url).pathname);
+
+/**
+ * The worker's own downloads fill the service worker's data caches, so offline use never needs a second download of
+ * the set files. The manifest is always replaced; hashed data files are written once.
+ */
+async function keep(url: string, res: Response): Promise<void> {
+  if (typeof caches === 'undefined') return;
+  try {
+    const cache = await caches.open(isManifestFile(url) ? MANIFEST_CACHE : DATA_CACHE);
+    if (isManifestFile(url) || !(await cache.match(url))) await cache.put(url, res);
+  } catch {
+    /* storage unavailable or full: the service worker caches on its own */
+  }
+}
+
 const fetchJson = async (url: string) => {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+  void keep(url, r.clone());
   return r.json();
 };
+
+/** Drops cached data files the current manifest no longer lists, and caches the status file for offline use. */
+async function tidyDataCache(base: string, manifest: Manifest): Promise<void> {
+  if (typeof caches === 'undefined') return;
+  try {
+    const current = new Set([manifest.tagsFile, ...manifest.sets.map((s) => s.file)].map((f) => new URL(`data/${f}`, base).href));
+    const cache = await caches.open(DATA_CACHE);
+    for (const req of await cache.keys()) if (!current.has(req.url)) await cache.delete(req);
+    if (manifest.statusFile) await fetchJson(new URL(`data/${manifest.statusFile}`, base).href).catch(() => undefined);
+  } catch {
+    /* best effort */
+  }
+}
 
 const engine = new Engine(db(), fetchJson);
 const analytics = new Analytics(engine, db());
@@ -28,10 +62,11 @@ let offlinePending: Promise<unknown> = Promise.resolve();
 const api = {
   async init(base: string, firstSet?: string) {
     ready ??= engine.init(base);
-    const manifest = await ready;
+    const manifest = (await ready) as Manifest;
     markInitialized();
-    if (firstSet) void engine.loadSet(firstSet).then(() => setTimeout(() => void engine.loadAll(), 1200));
-    else void engine.loadAll();
+    const rest = () => void engine.loadAll().then(() => tidyDataCache(base, manifest));
+    if (firstSet) void engine.loadSet(firstSet).then(() => setTimeout(rest, 1200));
+    else rest();
     return manifest;
   },
   async ensureSet(code: string) {

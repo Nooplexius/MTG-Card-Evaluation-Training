@@ -5,7 +5,7 @@ import './styles/base.css';
 import './styles/app.css';
 import { App } from './app/App.tsx';
 import { captureInstallPrompt } from './app/install.ts';
-import { warmDataCache, watchConnectivity } from './app/offline.ts';
+import { watchConnectivity } from './app/offline.ts';
 
 captureInstallPrompt();
 watchConnectivity();
@@ -20,14 +20,5 @@ function whenIdle(fn: () => void, delay: number) {
 }
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  whenIdle(() => {
-    registerSW({
-      immediate: true,
-      onOfflineReady: () => whenIdle(() => void warmDataCache(), 1000),
-      onRegisteredSW: () => {
-        if (navigator.serviceWorker.controller) whenIdle(() => void warmDataCache(), 1000);
-        else navigator.serviceWorker.addEventListener('controllerchange', () => whenIdle(() => void warmDataCache(), 1000), { once: true });
-      },
-    });
-  }, 2500);
+  whenIdle(() => void registerSW({ immediate: true }), 2500);
 }

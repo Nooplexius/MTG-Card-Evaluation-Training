@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { baseUrl, engine } from './engineClient.ts';
+import { engine } from './engineClient.ts';
 
 export interface OfflineState {
   offline: boolean;
@@ -34,19 +34,6 @@ export function watchConnectivity(): void {
   window.addEventListener('online', () => void sync(false));
   window.addEventListener('offline', () => void sync(true));
   if (!navigator.onLine) void sync(true);
-}
-
-/** Once the service worker controls the page, fetch the (hashed, immutable) data files so they are cached for offline use. */
-export async function warmDataCache(): Promise<void> {
-  if (!navigator.serviceWorker?.controller) return;
-  try {
-    const base = baseUrl();
-    const manifest = await (await fetch(`${base}data/manifest.json`)).json();
-    const files: string[] = [manifest.tagsFile, manifest.statusFile, ...manifest.sets.map((s: { file: string }) => s.file)];
-    for (const f of files) await fetch(`${base}data/${f}`).catch(() => undefined);
-  } catch {
-    /* offline or not yet built */
-  }
 }
 
 const PREFETCH_KEY = 'loupe.prefetch';
