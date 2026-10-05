@@ -153,7 +153,7 @@ export function FilterPanel({ value, onChange, count, unit = 'cards' }: FilterPa
           )}
         </div>
       </div>
-      <details className="syntax-help">
+      <details className="syntax-help" onToggle={(e) => feedback((e.currentTarget as HTMLDetailsElement).open ? 'nav.open' : 'nav.back')}>
         <summary>Search syntax</summary>
         <p>The filter speaks Scryfall syntax, so what you learn here works on Scryfall too. Chips write their terms into the field. Two extras only work in Loupe:</p>
         <ul>

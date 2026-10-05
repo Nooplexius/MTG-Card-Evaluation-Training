@@ -4,6 +4,7 @@ import { displayName, hasFaceImages, type Printing } from '../../lib/card.ts';
 import type { Mode } from '../../lib/types.ts';
 import type { CardView } from '../../lib/view.ts';
 import { useApp } from '../AppContext.tsx';
+import { useOffline } from '../offline.ts';
 import { feedback } from '../feedback/feedback.ts';
 import { go } from '../router.ts';
 import { setSettings, useReducedMotion, useSettings } from '../settings.ts';
@@ -52,6 +53,7 @@ function useFlip(ref: React.RefObject<HTMLElement | null>, dep: unknown, reduced
 export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill, onEndDrill }: PracticeProps) {
   const { manifest, starter, progress } = useApp();
   const settings = useSettings();
+  const offline = useOffline();
   const reduced = useReducedMotion();
   const mode: Mode = drill ? 'drill' : settings.mode;
   const p = usePractice(manifest, starter, { mode, drillKeys: drill?.keys, drillId: drill?.id, filterVersion });
@@ -148,7 +150,9 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
         <span className="credit__count num" aria-label="Session progress">
           {sessionText}
         </span>
-        {manifest?.synthetic ? (
+        {offline.offline ? (
+          <span className="credit__link credit__link--warn">Offline · practicing with {offline.cards ?? 0} cached cards</span>
+        ) : manifest?.synthetic ? (
           <TapLink className="credit__link credit__link--warn" href="#/data" fb="nav.open">
             Sample data: invented numbers, not 17Lands
           </TapLink>

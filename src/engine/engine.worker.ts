@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
+import { imageUrl } from '../lib/card.ts';
 import { db, exportBackup, importBackup } from '../lib/db.ts';
+import { streaks } from '../lib/analytics.ts';
 import type { CardSnapshot, Evaluation, Exposure, Session, Skip } from '../lib/types.ts';
 import { Analytics, type HistoryParams, type StatsParams } from './analyticsService.ts';
 import { Engine, type PlanRequest } from './engine.ts';
@@ -151,8 +153,33 @@ const api = {
     return insights.startDrill(facetId);
   },
   async streakInfo() {
-    const { streaks } = await import('../lib/analytics.ts');
     return streaks(await db().evaluations.toArray());
+  },
+  /** Offline: restrict practice to pool cards whose display image is in the service worker's image cache. */
+  async setOffline(offline: boolean) {
+    if (!offline || typeof caches === 'undefined') {
+      engine.offlineKeys = null;
+      return { cards: null };
+    }
+    await engine.loadAll();
+    const ids = await cachedImageIds();
+    engine.offlineKeys = new Set(engine.pool.entries.filter((e) => ids.has(e.card.p.id)).map((e) => e.key));
+    return { cards: engine.offlineKeys.size };
+  },
+  /** Display-image URLs of cards likely to come up soon (unexposed or due) that aren't cached yet. */
+  async prefetchUrls(n: number) {
+    await engine.loadAll();
+    const ids = await cachedImageIds();
+    const cands = engine.candidates().filter((c) => !engine.isExposed(c.oracleId));
+    const out: string[] = [];
+    for (let tries = 0; out.length < n && tries < n * 6 && cands.length > 0; tries++) {
+      const c = cands[Math.floor(engine.rng() * cands.length)];
+      const e = engine.pool.get(c.key);
+      if (!e || ids.has(e.card.p.id)) continue;
+      const url = imageUrl(e.card.p, 'display');
+      if (!out.includes(url)) out.push(url);
+    }
+    return out;
   },
   async todayCount() {
     const d = new Date();
@@ -174,6 +201,17 @@ const api = {
 };
 
 export type EngineApi = typeof api;
+
+async function cachedImageIds(): Promise<Set<string>> {
+  const ids = new Set<string>();
+  if (typeof caches === 'undefined') return ids;
+  const cache = await caches.open('loupe-card-images');
+  for (const req of await cache.keys()) {
+    const m = /\/display\/front\/[0-9a-f]\/[0-9a-f]\/([0-9a-f-]{36})\./.exec(req.url);
+    if (m) ids.add(m[1]);
+  }
+  return ids;
+}
 
 const server = serve(api as never, self as unknown as DedicatedWorkerGlobalScope);
 engine.on((p) => server.emit('progress', p));

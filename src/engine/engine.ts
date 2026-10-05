@@ -35,6 +35,8 @@ export class Engine {
   bag = new ShuffleBag();
   rng: Rng;
   filterKeys: string[] | null = null;
+  /** When offline: pool keys whose display image is cached; practice draws only from these. */
+  offlineKeys: Set<string> | null = null;
   weak: WeakFacet[] = [];
   rtRef = SCHED.rtRefMs;
   query: QueryService;
@@ -159,7 +161,11 @@ export class Engine {
 
   candidates(restrict?: string[]): Candidate[] {
     const keys = restrict ?? this.filterKeys;
-    const entries = keys ? keys.map((k) => this.pool.get(k)).filter((e): e is PoolEntry => !!e) : this.pool.entries;
+    let entries = keys ? keys.map((k) => this.pool.get(k)).filter((e): e is PoolEntry => !!e) : this.pool.entries;
+    if (this.offlineKeys) {
+      const off = this.offlineKeys;
+      entries = entries.filter((e) => off.has(e.key));
+    }
     return entries.map((e) => ({ key: e.key, oracleId: e.card.o, set: e.set, band: e.band, colorKey: e.colorKey }));
   }
 

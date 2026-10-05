@@ -6,6 +6,7 @@ import type { CardView, Selection } from '../../lib/view.ts';
 import type { StarterInfo } from '../AppContext.tsx';
 import { engine } from '../engineClient.ts';
 import { feedback } from '../feedback/feedback.ts';
+import { prefetchUpcoming } from '../offline.ts';
 import { getSettings } from '../settings.ts';
 import { cardImageUrl, preloadImage } from './CardFace.tsx';
 
@@ -113,6 +114,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
       for (const s of sels) void preloadImage(cardImageUrl(s.view.card.p)).catch(() => {});
       const ses = sessionRef.current;
       if (ses) persistSession({ ...ses, queue: queue.current.map((q) => q.view.key) });
+      void prefetchUpcoming();
     })();
     planning.current = p;
     try {

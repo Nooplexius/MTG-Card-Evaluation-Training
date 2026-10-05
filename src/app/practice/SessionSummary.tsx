@@ -7,7 +7,8 @@ import { engine } from '../engineClient.ts';
 import { feedback } from '../feedback/feedback.ts';
 import { go } from '../router.ts';
 import { getSettings, setSettings, useReducedMotion } from '../settings.ts';
-import { Tap } from '../ui/Tap.tsx';
+import { canPromptInstall, isIosBrowser, promptInstall } from '../install.ts';
+import { Tap, TapLink } from '../ui/Tap.tsx';
 import { gradeLabel } from './GradePad.tsx';
 import { GradeChip, diffWords } from './RevealPanel.tsx';
 import { Zoom, type ZoomTarget } from './Zoom.tsx';
@@ -35,6 +36,8 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   const [best, setBest] = useState<{ rate: number; isNew: boolean } | null>(null);
   const [streak, setStreak] = useState<{ days: number; today: number } | null>(null);
+  const [total, setTotal] = useState(0);
+  const [installShown, setInstallShown] = useState(false);
 
   useEffect(() => {
     void engine()
@@ -57,6 +60,9 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
         for (const w of worst) vs[w.key] = await engine().call('view', w.key);
         setViews(vs);
       });
+    void engine()
+      .call('evaluationCount')
+      .then(setTotal);
     void engine()
       .call('streakInfo')
       .then((s) => setStreak({ days: s.days, today: s.today }));
@@ -138,6 +144,38 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
             Drill this
           </Tap>
         </m.section>
+      )}
+      {!getSettings().installPromptShown && !installShown && (isIosBrowser() || canPromptInstall()) && (
+        <m.section className="summary__drill" {...enter(4)}>
+          <h2 className="section-title smallcaps">Keep your progress safe</h2>
+          {isIosBrowser() ? (
+            <p>Safari can delete a site's data after a week without a visit. Add Loupe to your Home Screen: tap Share, then “Add to Home Screen”.</p>
+          ) : (
+            <p>Install Loupe as an app so your progress stays put and it opens offline.</p>
+          )}
+          <div className="row-actions">
+            {canPromptInstall() && (
+              <Tap fb="action.primary" className="btn btn--primary" onTap={() => void promptInstall().then(() => setInstallShown(true))}>
+                Install
+              </Tap>
+            )}
+            <Tap
+              fb="action.secondary"
+              className="btn"
+              onTap={() => {
+                setSettings({ installPromptShown: true });
+                setInstallShown(true);
+              }}
+            >
+              Not now
+            </Tap>
+          </div>
+        </m.section>
+      )}
+      {total >= 100 && Date.now() - getSettings().lastBackupAt > 14 * 86_400_000 && (
+        <m.p className="summary__meta" {...enter(5)}>
+          You have {total} evaluations on this device. <TapLink href="#/settings" fb="nav.open">Export a backup</TapLink> now and then.
+        </m.p>
       )}
       <div className="summary__actions">
         {drillLabel ? (
