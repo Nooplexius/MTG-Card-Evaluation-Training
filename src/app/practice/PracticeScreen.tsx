@@ -4,6 +4,7 @@ import { displayName, hasFaceImages, type Printing } from '../../lib/card.ts';
 import type { Mode } from '../../lib/types.ts';
 import type { CardView } from '../../lib/view.ts';
 import { useApp } from '../AppContext.tsx';
+import { useLoadProgress } from '../loadProgress.ts';
 import { useOffline } from '../offline.ts';
 import { feedback } from '../feedback/feedback.ts';
 import { go } from '../router.ts';
@@ -50,8 +51,14 @@ function useFlip(ref: React.RefObject<HTMLElement | null>, dep: unknown, reduced
   }, []);
 }
 
+/** Share of set files loaded, while loading; subscribes on its own so progress never re-renders the practice screen. */
+function LoadPercent({ show }: { show: boolean }) {
+  const progress = useLoadProgress();
+  return show && progress.total > 0 && progress.loaded < progress.total ? <span className="credit__load num">{Math.round((100 * progress.loaded) / progress.total)}%</span> : <span className="credit__load" />;
+}
+
 export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill, onEndDrill }: PracticeProps) {
-  const { manifest, starter, progress } = useApp();
+  const { manifest, starter } = useApp();
   const settings = useSettings();
   const offline = useOffline();
   const reduced = useReducedMotion();
@@ -162,7 +169,7 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
             Win-rate data from 17Lands Card Data{setMeta ? ` · ${setMeta.code} ${setMeta.formatLabel}` : ''}
           </TapLink>
         )}
-        {p.session && progress.total > 0 && progress.loaded < progress.total ? <span className="credit__load num">{Math.round((100 * progress.loaded) / progress.total)}%</span> : <span className="credit__load" />}
+        <LoadPercent show={p.session !== null} />
       </div>
       <main className="stage">
         <div className="card-slot">
