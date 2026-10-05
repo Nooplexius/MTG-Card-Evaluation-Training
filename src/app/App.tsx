@@ -1,6 +1,7 @@
 import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
 import { lazy, Suspense, useEffect } from 'react';
 import { AppProvider, useApp } from './AppContext.tsx';
+import { endDrill, useDrill } from './drillStore.ts';
 import { FilterScreen } from './filter/FilterScreen.tsx';
 import { applyPracticeQuery, filterLabel, usePracticeFilter } from './filter/practiceFilter.ts';
 import { MenuScreen } from './MenuScreen.tsx';
@@ -12,12 +13,14 @@ const AboutScreen = lazy(() => import('./screens/AboutScreen.tsx').then((m) => (
 const DataScreen = lazy(() => import('./screens/DataScreen.tsx').then((m) => ({ default: m.DataScreen })));
 const SettingsScreen = lazy(() => import('./screens/SettingsScreen.tsx').then((m) => ({ default: m.SettingsScreen })));
 const StatsScreen = lazy(() => import('./stats/StatsScreen.tsx').then((m) => ({ default: m.StatsScreen })));
+const InsightsScreen = lazy(() => import('./insights/InsightsScreen.tsx').then((m) => ({ default: m.InsightsScreen })));
 const HistoryScreen = lazy(() => import('./stats/HistoryScreen.tsx').then((m) => ({ default: m.HistoryScreen })));
 
 function Shell() {
   const { route } = useRoute();
   const { manifest, error } = useApp();
   const filter = usePracticeFilter();
+  const drill = useDrill();
 
   useEffect(() => {
     if (!manifest) return;
@@ -36,7 +39,7 @@ function Shell() {
   return (
     <>
       <div hidden={route !== 'practice'} className="route-practice">
-        <PracticeScreen filterLabel={filterLabel(filter.query)} filterCount={filter.count ?? total} filterVersion={filter.version} />
+        <PracticeScreen filterLabel={filterLabel(filter.query)} filterCount={drill ? drill.keys.length : (filter.count ?? total)} filterVersion={filter.version} drill={drill} onEndDrill={endDrill} />
       </div>
       {route !== 'practice' && (
         <Suspense fallback={<div className="screen" aria-busy="true" />}>
@@ -47,6 +50,7 @@ function Shell() {
           {route === 'settings' && <SettingsScreen />}
           {route === 'stats' && <StatsScreen />}
           {route === 'history' && <HistoryScreen />}
+          {route === 'insights' && <InsightsScreen />}
         </Suspense>
       )}
     </>

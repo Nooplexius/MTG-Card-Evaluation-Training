@@ -3,6 +3,7 @@ import { db, exportBackup, importBackup } from '../lib/db.ts';
 import type { CardSnapshot, Evaluation, Exposure, Session, Skip } from '../lib/types.ts';
 import { Analytics, type HistoryParams, type StatsParams } from './analyticsService.ts';
 import { Engine, type PlanRequest } from './engine.ts';
+import { InsightService } from './insightService.ts';
 import { serve } from './rpc.ts';
 
 const fetchJson = async (url: string) => {
@@ -13,6 +14,7 @@ const fetchJson = async (url: string) => {
 
 const engine = new Engine(db(), fetchJson);
 const analytics = new Analytics(engine, db());
+const insights = new InsightService(engine, analytics, db());
 let ready: Promise<unknown> | null = null;
 
 const api = {
@@ -61,7 +63,9 @@ const api = {
       return d.evaluations.add(record);
     });
     await engine.record(record);
-    return { id, firstLook };
+    insights.noteEvaluation();
+    const drill = ev.drillId ? await insights.drillStep(ev.drillId) : null;
+    return { id, firstLook, drill };
   },
   async skip(s: Skip) {
     await db().skips.add(s);
@@ -97,7 +101,7 @@ const api = {
         n++;
       }
     }
-    return { recentMae: n >= 10 ? sum / n : null, drill: null };
+    return { recentMae: n >= 10 ? sum / n : null, drill: await insights.recommendation() };
   },
   async exportBackup() {
     return exportBackup();
@@ -138,6 +142,22 @@ const api = {
     const live = engine.view(key);
     if (live) return { view: live, snapshot: null };
     return { view: null, snapshot: (await analytics.snapshot(printingId)) ?? null };
+  },
+  async insights() {
+    await engine.loadAll();
+    return insights.compute();
+  },
+  async startDrill(facetId: string) {
+    return insights.startDrill(facetId);
+  },
+  async streakInfo() {
+    const { streaks } = await import('../lib/analytics.ts');
+    return streaks(await db().evaluations.toArray());
+  },
+  async todayCount() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return db().evaluations.where('ts').aboveOrEqual(d.getTime()).count();
   },
   async savedFilters() {
     return db().filters.orderBy('name').toArray();

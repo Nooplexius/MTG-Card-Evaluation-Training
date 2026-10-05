@@ -4,8 +4,9 @@ import { displayName } from '../../lib/card.ts';
 import type { Evaluation, Session } from '../../lib/types.ts';
 import type { CardView } from '../../lib/view.ts';
 import { engine } from '../engineClient.ts';
+import { feedback } from '../feedback/feedback.ts';
 import { go } from '../router.ts';
-import { useReducedMotion } from '../settings.ts';
+import { getSettings, setSettings, useReducedMotion } from '../settings.ts';
 import { Tap } from '../ui/Tap.tsx';
 import { gradeLabel } from './GradePad.tsx';
 import { GradeChip, diffWords } from './RevealPanel.tsx';
@@ -22,17 +23,33 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
   const [views, setViews] = useState<Record<string, CardView | null>>({});
   const [extras, setExtras] = useState<SummaryExtras | null>(null);
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
+  const [best, setBest] = useState<{ rate: number; isNew: boolean } | null>(null);
+  const [streak, setStreak] = useState<{ days: number; today: number } | null>(null);
 
   useEffect(() => {
     void engine()
       .call('sessionEvaluations', session.id)
       .then(async (es) => {
         setEvals(es);
+        const firsts = es.filter((e) => e.firstLook);
+        if (firsts.length >= 8) {
+          const rate = firsts.filter((e) => Math.abs(e.user - e.actual) <= 1).length / firsts.length;
+          const prev = getSettings().bestFirstLook;
+          const isNew = rate > prev;
+          if (isNew) {
+            setSettings({ bestFirstLook: rate });
+            setTimeout(() => feedback('milestone'), 500);
+          }
+          setBest({ rate, isNew });
+        }
         const worst = [...es].sort((a, b) => Math.abs(b.user - b.actual) - Math.abs(a.user - a.actual)).slice(0, 3);
         const vs: Record<string, CardView | null> = {};
         for (const w of worst) vs[w.key] = await engine().call('view', w.key);
         setViews(vs);
       });
+    void engine()
+      .call('streakInfo')
+      .then((s) => setStreak({ days: s.days, today: s.today }));
     void engine()
       .call('summaryExtras', session.id)
       .then((x) => setExtras(x as SummaryExtras))
@@ -68,6 +85,12 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
           <span className="big-stat__label">mean error (steps)</span>
         </div>
       </m.section>
+      {(best || streak) && (
+        <m.p className="summary__meta" {...enter(1)}>
+          {best ? (best.isNew ? `New personal best: ${Math.round(best.rate * 100)}% of first looks within one step. ` : `First looks within one step: ${Math.round(best.rate * 100)}% (best ${Math.round(getSettings().bestFirstLook * 100)}%). `) : ''}
+          {streak ? `${streak.today} of ${getSettings().dailyGoal} cards today · ${streak.days}-day streak` : ''}
+        </m.p>
+      )}
       {delta !== null && (
         <m.p className={`summary__delta ${delta <= 0 ? 'is-better' : 'is-worse'}`} {...enter(1)}>
           {delta <= 0 ? `${Math.abs(delta).toFixed(2)} steps closer than your recent sessions` : `${delta.toFixed(2)} steps further off than your recent sessions`}

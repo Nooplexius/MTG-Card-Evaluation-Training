@@ -10,6 +10,8 @@ import { getSettings } from '../settings.ts';
 import { cardImageUrl, preloadImage } from './CardFace.tsx';
 
 export const DEAL_MS = 220;
+/** Matches InsightService's DRILL_CARDS; a drill can end earlier on mastery. */
+const DRILL_LENGTH = 20;
 const QUEUE = 3;
 
 export interface Current {
@@ -29,6 +31,9 @@ export interface RevealState {
   user: number;
   contrasts: CardView[] | null;
   firstLook: boolean | null;
+  /** Set on the card that reaches today's goal. */
+  goalReached: boolean;
+  drillMastered: boolean;
 }
 
 export interface PracticeApi {
@@ -43,6 +48,7 @@ export interface PracticeApi {
   markVisible: () => void;
   newSession: () => void;
   mode: Mode;
+  today: number;
 }
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
@@ -53,7 +59,7 @@ function fromSelection(s: Selection): Current {
 
 function newSessionRecord(mode: Mode, drillId?: string): Session {
   const s = getSettings();
-  return { id: uid(), startedAt: Date.now(), endedAt: null, length: s.sessionLength, mode, filter: s.query, done: 0, queue: [], current: null, summarySeen: false, drillId };
+  return { id: uid(), startedAt: Date.now(), endedAt: null, length: drillId ? DRILL_LENGTH : s.sessionLength, mode, filter: drillId ? '' : s.query, done: 0, queue: [], current: null, summarySeen: false, drillId };
 }
 
 export function snapshotOf(v: CardView): CardSnapshot {
@@ -71,6 +77,8 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
   const [reveal, setReveal] = useState<RevealState | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [streak, setStreak] = useState(0);
+  const [today, setToday] = useState(0);
+  const todayRef = useRef(0);
   const queue = useRef<Selection[]>([]);
   const planning = useRef<Promise<void> | null>(null);
   const sessionRef = useRef<Session | null>(null);
@@ -119,6 +127,10 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
   useEffect(() => {
     if (!manifest) return;
     let cancelled = false;
+    void e.call('todayCount').then((n) => {
+      todayRef.current = n;
+      setToday(n);
+    });
     (async () => {
       const open = opts.drillId ? null : await e.call('getOpenSession');
       if (cancelled) return;
@@ -176,8 +188,13 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     if (!cur) return;
     const now = Date.now();
     const rtMs = Math.max(0, now - (cur.visibleAt ?? cur.shownAt + DEAL_MS));
-    setReveal({ user: g, contrasts: null, firstLook: null });
+    todayRef.current += 1;
+    const goal = getSettings().dailyGoal;
+    const goalReached = todayRef.current === goal;
+    setToday(todayRef.current);
+    setReveal({ user: g, contrasts: null, firstLook: null, goalReached, drillMastered: false });
     setPhase('revealed');
+    if (goalReached) setTimeout(() => feedback('milestone'), 420);
     let view = cur.view;
     if (!view) {
       view = await e.call('viewWhenReady', cur.key);
@@ -231,8 +248,9 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
       /* ignore */
     }
     const saved = await e.call('saveEvaluation', evaluation, snapshotOf(view));
-    setReveal((r) => (r ? { ...r, firstLook: saved.firstLook } : r));
-    if (ses) persistSession({ ...ses, done: ses.done + 1 });
+    setReveal((r) => (r ? { ...r, firstLook: saved.firstLook, drillMastered: Boolean(saved.drill?.mastered) } : r));
+    const s2 = sessionRef.current ?? ses;
+    if (s2) persistSession({ ...s2, done: s2.done + 1, length: saved.drill?.finished ? s2.done + 1 : s2.length });
     const avoid = [view.key, ...queue.current.map((q) => q.view.key)];
     const contrasts = await e.call('contrasts', view.key, 3, avoid);
     setReveal((r) => (r && r.user === g ? { ...r, contrasts } : r));
@@ -278,5 +296,5 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     await advance();
   }, [advance, opts.drillId]);
 
-  return { phase, current, reveal, session, streak, commit, next: advance, skip, markVisible, newSession, mode: opts.mode };
+  return { phase, current, reveal, session, streak, commit, next: advance, skip, markVisible, newSession, mode: opts.mode, today };
 }

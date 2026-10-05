@@ -12,6 +12,8 @@ export interface Settings {
   installPromptShown: boolean;
   lastBackupAt: number;
   showKeyHints: boolean;
+  /** Best session share of first looks within one step (sessions with at least 8 first looks). */
+  bestFirstLook: number;
 }
 
 export const DEFAULTS: Settings = {
@@ -26,6 +28,7 @@ export const DEFAULTS: Settings = {
   installPromptShown: false,
   lastBackupAt: 0,
   showKeyHints: true,
+  bestFirstLook: 0,
 };
 
 const KEY = 'loupe.settings';
