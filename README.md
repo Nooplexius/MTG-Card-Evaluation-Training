@@ -77,6 +77,7 @@ To stop automated 17Lands access, set `autoFetch17Lands` to `false` and push. Th
 - `pipeline`: data importer, validator, Scryfall join and eligibility rules.
 - `tests`: unit tests, end-to-end tests and fixtures.
 - Notes: [DESIGN.md](DESIGN.md) covers the visual system and interaction, [DECISIONS.md](DECISIONS.md) the judgment calls, and [PLAN.md](PLAN.md) the build checklist.
+- The build prompt is in [prompt/PROMPT.md](prompt/PROMPT.md), with its evidence and sources in [prompt/RESEARCH_NOTES.md](prompt/RESEARCH_NOTES.md).
 
 ## Credits
 
