@@ -16,8 +16,12 @@ test('a full session, a query filter, stats and insights, and progress that surv
   const counted = page.locator('.filter__count[data-query="t:creature c:r"]');
   await expect(counted).toContainText('cards');
   const count = Number((await counted.locator('b').innerText()).replace(/,/g, ''));
+  const total = await page.evaluate(async () => {
+    const m = (await (await fetch('data/manifest.json')).json()) as { sets: Array<{ cards: number }> };
+    return m.sets.reduce((n, s) => n + s.cards, 0);
+  });
   expect(count).toBeGreaterThan(20);
-  expect(count).toBeLessThan(5014);
+  expect(count).toBeLessThan(total);
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   await expect(page.locator('.filter-chip__text')).toHaveText('t:creature c:r');
   await cardReady(page);

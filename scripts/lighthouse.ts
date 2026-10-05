@@ -11,6 +11,18 @@ import lighthouse from 'lighthouse';
 const url = process.argv[2] ?? 'http://127.0.0.1:4173/';
 const out = resolve(import.meta.dirname, '../artifacts');
 
+/** The first DOM node snippet anywhere in an audit's details (its location differs between Lighthouse versions). */
+function snippetIn(d: unknown): string | null {
+  if (!d || typeof d !== 'object') return null;
+  const o = d as Record<string, unknown>;
+  if (o.type === 'node' && typeof o.snippet === 'string') return o.snippet;
+  for (const v of Object.values(o)) {
+    const s = Array.isArray(v) ? v.map(snippetIn).find((x) => x) : snippetIn(v);
+    if (s) return s;
+  }
+  return null;
+}
+
 async function main() {
   const chrome = await chromeLauncher.launch({ chromeFlags: ['--headless=new', '--no-sandbox'], chromePath: process.env.CHROME_PATH });
   try {
@@ -23,7 +35,7 @@ async function main() {
     const perf = Math.round((lhr.categories.performance.score ?? 0) * 100);
     const a11y = Math.round((lhr.categories.accessibility.score ?? 0) * 100);
     const lcp = lhr.audits['largest-contentful-paint'].numericValue ?? Infinity;
-    const lcpEl = (lhr.audits['largest-contentful-paint-element']?.details as { items?: Array<{ items?: Array<{ node?: { snippet?: string } }> }> } | undefined)?.items?.[0]?.items?.[0]?.node?.snippet ?? '';
+    const lcpEl = snippetIn(lhr.audits['largest-contentful-paint-element']?.details) ?? snippetIn(lhr.audits['lcp-breakdown-insight']?.details) ?? '';
     const failed = Object.values(lhr.audits)
       .filter((a) => a.score !== null && a.score < 1 && lhr.categories.accessibility.auditRefs.some((r) => r.id === a.id))
       .map((a) => a.id);
