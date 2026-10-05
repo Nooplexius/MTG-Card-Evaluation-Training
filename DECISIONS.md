@@ -40,13 +40,18 @@ Judgment calls where the brief left room, or where live sources differed from it
     - Result: planted effects found in 50/50 runs, unplanted ones in at most 2/50.
 20. **Drill mastery** means at least 7 of the last 8 drill cards within one step and |bias| ≤ 0.5 steps. A drill also ends after 20 cards.
 21. **Personal best** is a session's share of first looks within one step, counted when the session has at least 8 first looks.
-22. **Offline cache.** Upcoming cards' images are prefetched up to 240 a day. Offline, practice only draws cards whose image is cached, and skips one that still fails to load.
+22. **Offline cache.**
+    - The worker stores each data file it downloads in the service worker's runtime caches and drops cached files the manifest no longer lists. Offline use therefore needs no second download; re-fetching the 9.5 MB of set files after install also caused jank during the first reps on slow CPUs.
+    - Upcoming cards' images are prefetched up to 240 a day.
+    - Offline, practice only draws cards whose image is cached, and skips one that still fails to load.
 23. **Rate limits.** Scryfall API calls are at least 600 ms apart in the app and 750 ms apart in scripts. A 429 pauses for 30 s (35 s in scripts) and is never retried in a loop. Responses are cached for 7 days.
 24. **Cold first visit.**
     - A first-time visitor on the practice route gets a static copy of the practice screen with an inlined random starter card, painted before any JavaScript.
     - The app script starts once that card's largest-contentful-paint entry arrives, or on the first tap, or after 3 s.
     - The static screen uses local serif and sans fonts, so no font download competes with the card image. React swaps in Alegreya on mount.
     - A grade tapped on the static screen is queued and committed with its original timestamp.
+    - Other screens are code-split. Their code is prefetched once the user first leaves practice, never during it. A route change keeps the current screen up until the next one's code is ready, so there's no blank frame.
+    - Set-loading progress has its own store, so the 18 progress events re-render only the percentage, not the practice screen.
 25. **Compare mode.**
     - Both cards come from the same set and format, because GIH WR is relative to a format.
     - A pair is used only when its order is clear: at least 1 point and 2 standard errors apart.
