@@ -50,7 +50,8 @@ Status: `[x]` done · `[~]` in progress · `[ ]` to do · `[!]` waiting on the o
 ## M7 · Ship
 - [x] GitHub Actions: CI, daily data + deploy, Scryfall drift check
 - [x] README
-- [!] Enable GitHub Pages (Settings → Pages → Source: GitHub Actions) and run "Data and deploy" once
+- [x] Real 17Lands exports for the 18 finished sets (2026-10-05); FRA follows through the daily fetch from 2026-10-12
+- [!] Enable GitHub Pages (Settings → Pages → Source: GitHub Actions); merging the exports then deploys
 
 ## Stretch
 - [x] Compare mode ("which has the higher GIH WR?")

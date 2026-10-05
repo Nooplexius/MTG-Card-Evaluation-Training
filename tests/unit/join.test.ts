@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeApiRows } from '../../pipeline/exports/normalizeApi.ts';
 import { normName } from '../../pipeline/inputs/cardsCsv.ts';
+import { inferSet } from '../../pipeline/compute.ts';
 import { buildJoinIndex, joinRow, setMatchRate } from '../../pipeline/join.ts';
 import { buildLimitedSet } from '../../pipeline/limitedSets.ts';
 import type { SeventeenRow } from '../../pipeline/types.ts';
@@ -132,5 +133,33 @@ describe('set inference', () => {
     const tlaRows = asExport(normalizeApiRows(f.tla).rows);
     expect(setMatchRate(tlaRows, ls('MKM'), idx)).toBeLessThan(0.2);
     expect(normName('  Aang’s Journey ')).toBe("aang's journey");
+  });
+
+  /** Rows for Arena cards that exist only in another set, like MKM's List slot (older cards in their original printings). */
+  const reprints = (n: number) => {
+    const tla = new Set(f.cards.filter((c) => c.set === 'tla' || c.set === 'tle').map((c) => normName(c.name)));
+    const names = [...new Set(f.cards.filter((c) => c.set === 'dsk' && typeof c.arena_id === 'number' && !c.name.includes(' // ')).map((c) => c.name))].filter((nm) => !tla.has(normName(nm)));
+    return names.slice(0, n).map(rowNamed);
+  };
+  const candidates = () => ['TLA', 'OM1', 'TMT', 'OTJ', 'MKM'].map(ls);
+
+  it('assigns an export whose own printings cover less than 90% when the rest are Arena reprints', () => {
+    const tlaRows = asExport(normalizeApiRows(f.tla).rows);
+    const rows = [...tlaRows, ...reprints(Math.round(tlaRows.length * 0.15))];
+    expect(setMatchRate(rows, ls('TLA'), idx)).toBeLessThan(0.9);
+    const inf = inferSet({ rows }, candidates(), idx, 0.9);
+    expect(inf.set).toBe('TLA');
+    expect(inf.detail).toMatch(/100\.0% of rows match TLA \(8\d\.\d% from its own printings/);
+  });
+
+  it('refuses mixed or unknown exports', () => {
+    const tlaRows = asExport(normalizeApiRows(f.tla).rows);
+    const mixed = [...tlaRows.slice(0, 120), ...asExport(normalizeApiRows(f.om1).rows).slice(0, 100)];
+    expect(inferSet({ rows: mixed }, candidates(), idx, 0.9).set).toBeNull();
+    expect(inferSet({ rows: mixed }, candidates(), idx, 0.9).detail).toMatch(/matches several sets/);
+    const mostlyReprints = [...tlaRows.slice(0, 40), ...reprints(80)];
+    expect(inferSet({ rows: mostlyReprints }, candidates(), idx, 0.9).set).toBeNull();
+    const unknown = Array.from({ length: 50 }, (_, i) => rowNamed(`Not A Card ${i}`));
+    expect(inferSet({ rows: unknown }, candidates(), idx, 0.9).detail).toMatch(/no set reaches 90%/);
   });
 });

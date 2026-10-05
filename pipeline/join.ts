@@ -131,7 +131,10 @@ function step2(row: SeventeenRow, ls: LimitedSet, idx: JoinIndex): ScryCard | nu
   return null;
 }
 
-/** Step 3: exact name or front-face name among Arena printings anywhere (cross-set bonus sheets such as SPG and OMB). */
+/**
+ * Step 3: exact name or front-face name among Arena printings anywhere (cross-set bonus sheets such as SPG and OMB, and
+ * reprint slots such as MKM's List). Prefers the newest printing released by the set's release, as it was drafted.
+ */
 function step3(row: SeventeenRow, ls: LimitedSet, idx: JoinIndex): ScryCard | null | 'ambiguous' {
   const hits = idx.arenaByName.get(normName(row.name)) ?? [];
   if (hits.length === 0) return null;
@@ -139,7 +142,9 @@ function step3(row: SeventeenRow, ls: LimitedSet, idx: JoinIndex): ScryCard | nu
   if (oracles.size > 1) return 'ambiguous';
   const sameDayBonus = hits.filter((h) => h.set_type === 'masterpiece' && ls.spgDate !== null && h.released_at === ls.spgDate);
   if (sameDayBonus.length > 0) return regularPrinting(sameDayBonus);
-  return [...hits].sort((a, b) => (a.released_at < b.released_at ? 1 : -1))[0];
+  const byDate = [...hits].sort((a, b) => (a.released_at < b.released_at ? 1 : -1));
+  const released = ls.released ?? ls.configRelease;
+  return (released ? byDate.find((h) => h.released_at <= released) : undefined) ?? byDate[byDate.length - 1];
 }
 
 export type JoinOutcome = { ok: true; match: JoinMatch } | { ok: false; reason: string };
@@ -166,8 +171,22 @@ export function joinRow(row: SeventeenRow, ls: LimitedSet, idx: JoinIndex, maxSt
 
 /** Share of rows matched by the set-specific steps (1 and 2); used to infer which set an export belongs to. */
 export function setMatchRate(rows: SeventeenRow[], ls: LimitedSet, idx: JoinIndex): number {
-  if (rows.length === 0) return 0;
-  let hit = 0;
-  for (const r of rows) if (joinRow(r, ls, idx, 2).ok) hit++;
-  return hit / rows.length;
+  return setMatchRates(rows, ls, idx).own;
+}
+
+/**
+ * Shares of rows matched by the set's own printings (steps 1 and 2) and by the whole join chain. They differ for sets
+ * whose boosters reprint older cards in their original printings, such as MKM's List slot on Arena.
+ */
+export function setMatchRates(rows: SeventeenRow[], ls: LimitedSet, idx: JoinIndex): { own: number; all: number } {
+  if (rows.length === 0) return { own: 0, all: 0 };
+  let own = 0;
+  let all = 0;
+  for (const r of rows) {
+    if (joinRow(r, ls, idx, 2).ok) {
+      own++;
+      all++;
+    } else if (joinRow(r, ls, idx, 3).ok) all++;
+  }
+  return { own: own / rows.length, all: all / rows.length };
 }
