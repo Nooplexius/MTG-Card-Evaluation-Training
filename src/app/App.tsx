@@ -11,6 +11,8 @@ import { getSettings, useReducedMotion } from './settings.ts';
 const AboutScreen = lazy(() => import('./screens/AboutScreen.tsx').then((m) => ({ default: m.AboutScreen })));
 const DataScreen = lazy(() => import('./screens/DataScreen.tsx').then((m) => ({ default: m.DataScreen })));
 const SettingsScreen = lazy(() => import('./screens/SettingsScreen.tsx').then((m) => ({ default: m.SettingsScreen })));
+const StatsScreen = lazy(() => import('./stats/StatsScreen.tsx').then((m) => ({ default: m.StatsScreen })));
+const HistoryScreen = lazy(() => import('./stats/HistoryScreen.tsx').then((m) => ({ default: m.HistoryScreen })));
 
 function Shell() {
   const { route } = useRoute();
@@ -43,6 +45,8 @@ function Shell() {
           {route === 'about' && <AboutScreen />}
           {route === 'data' && <DataScreen />}
           {route === 'settings' && <SettingsScreen />}
+          {route === 'stats' && <StatsScreen />}
+          {route === 'history' && <HistoryScreen />}
         </Suspense>
       )}
     </>

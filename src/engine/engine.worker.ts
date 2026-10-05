@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { db, exportBackup, importBackup } from '../lib/db.ts';
 import type { CardSnapshot, Evaluation, Exposure, Session, Skip } from '../lib/types.ts';
+import { Analytics, type HistoryParams, type StatsParams } from './analyticsService.ts';
 import { Engine, type PlanRequest } from './engine.ts';
 import { serve } from './rpc.ts';
 
@@ -11,6 +12,7 @@ const fetchJson = async (url: string) => {
 };
 
 const engine = new Engine(db(), fetchJson);
+const analytics = new Analytics(engine, db());
 let ready: Promise<unknown> | null = null;
 
 const api = {
@@ -118,6 +120,24 @@ const api = {
   async queryKeys(q: string) {
     const r = await engine.queryPool(q, (p) => server.emit('query-progress', p));
     return { error: r.error, needsConnection: r.needsConnection, keys: r.keys };
+  },
+  async stats(p: StatsParams) {
+    await engine.loadAll();
+    return analytics.stats(p);
+  },
+  async history(p: HistoryParams) {
+    await engine.loadAll();
+    return analytics.history(p);
+  },
+  async historyCount(q: string) {
+    const r = await analytics.filtered({ query: q, days: 0, mode: 'all' });
+    return { count: r.error || r.needsConnection ? null : r.evals.length, error: r.error, warnings: r.warnings, needsConnection: r.needsConnection };
+  },
+  async snapshotView(printingId: string, key: string) {
+    await engine.loadAll();
+    const live = engine.view(key);
+    if (live) return { view: live, snapshot: null };
+    return { view: null, snapshot: (await analytics.snapshot(printingId)) ?? null };
   },
   async savedFilters() {
     return db().filters.orderBy('name').toArray();
