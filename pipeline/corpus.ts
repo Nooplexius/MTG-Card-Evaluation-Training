@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { gunzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import type { Printing } from '../src/lib/card.ts';
 import { allIgnored, apiSearchQuery, apiTermsOf, compile, evaluate, type ApiResult } from '../src/lib/query/engine.ts';
 import { DISPLAY_KEYS, type LocalContext, type Subject } from '../src/lib/query/local.ts';
@@ -35,9 +35,45 @@ export interface Corpus {
 
 const APP_KEYS = new Set(['lset', 'crowd']);
 
+export function readGzJson<T>(path: string): T {
+  return JSON.parse(gunzipSync(readFileSync(path)).toString('utf8')) as T;
+}
+
+interface StoredCorpus extends Omit<Corpus, 'entries' | 'api'> {
+  poolIds: string[];
+  entries: Array<Omit<CorpusEntry, 'expected'> & { expected: number[] | null }>;
+  api: Record<string, Omit<SearchOutcome, 'ids'> & { ids: number[] }>;
+}
+
+/** Stores printing ids as indices into the pool's ids; printings outside the pool can't affect results and are dropped. */
+export function writeCorpus(path: string, c: Corpus, poolIds: string[]): void {
+  const ids = [...new Set(poolIds)].sort();
+  const at = new Map(ids.map((id, i) => [id, i] as const));
+  const pack = (xs: string[]) => xs.map((x) => at.get(x)).filter((x): x is number => x !== undefined).sort((a, b) => a - b);
+  const stored: StoredCorpus = {
+    recordedAt: c.recordedAt,
+    setCodes: c.setCodes,
+    poolIds: ids,
+    entries: c.entries.map((e) => ({ ...e, expected: e.expected ? pack(e.expected) : null })),
+    api: Object.fromEntries(Object.entries(c.api).map(([k, o]) => [k, { ...o, ids: pack(o.ids) }])),
+  };
+  writeFileSync(path, gzipSync(JSON.stringify(stored)));
+}
+
+export function readCorpus(path: string): Corpus {
+  const s = readGzJson<StoredCorpus>(path);
+  const un = (xs: number[]) => xs.map((i) => s.poolIds[i]);
+  return {
+    recordedAt: s.recordedAt,
+    setCodes: s.setCodes,
+    entries: s.entries.map((e) => ({ ...e, expected: e.expected ? un(e.expected).sort() : null })),
+    api: Object.fromEntries(Object.entries(s.api).map(([k, o]) => [k, { ...o, ids: un(o.ids) }])),
+  };
+}
+
 export function loadQueryFixtures(root: string) {
   const fix = join(root, 'tests/fixtures');
-  const pool = JSON.parse(readFileSync(join(fix, 'query/pool.json'), 'utf8')) as PoolFixtureEntry[];
+  const pool = readGzJson<PoolFixtureEntry[]>(join(fix, 'query/pool.json.gz'));
   const keywords = JSON.parse(readFileSync(join(fix, 'scryfall/keywords.json'), 'utf8')) as string[];
   const tags = gunzipSync(readFileSync(join(fix, 'scryfall/oracle-tags.jsonl.gz')))
     .toString('utf8')
@@ -190,7 +226,7 @@ export async function recordCorpus(opts: { root: string; cacheDir: string }): Pr
     process.stdout.write(`\r${i}/${queries.length} ${q.slice(0, 50).padEnd(50)}`);
   }
   const corpus: Corpus = { recordedAt: new Date().toISOString(), setCodes: fx.setCodes, entries, api };
-  writeFileSync(join(opts.root, 'tests/fixtures/query/corpus.json'), JSON.stringify(corpus));
+  writeCorpus(join(opts.root, 'tests/fixtures/query/corpus.json.gz'), corpus, fx.pool.map((e) => e.p.id));
   const { ok, bad } = compare(entries, fx, api);
   console.log(`\nRecorded ${entries.length} queries. Local engine agrees on ${ok}.`);
   for (const b of bad) console.log(`  ✗ ${b}`);
@@ -199,7 +235,7 @@ export async function recordCorpus(opts: { root: string; cacheDir: string }): Pr
 /** Re-runs the corpus against the live API and reports drift. Never fails unless strict. */
 export async function corpusDrift(opts: { root: string; strict: boolean }): Promise<number> {
   const fx = loadQueryFixtures(opts.root);
-  const corpus = JSON.parse(readFileSync(join(opts.root, 'tests/fixtures/query/corpus.json'), 'utf8')) as Corpus;
+  const corpus = readCorpus(join(opts.root, 'tests/fixtures/query/corpus.json.gz'));
   const client = new ScryfallClient({ fetch, headers: { 'User-Agent': 'Loupe/1.0 (differential drift check)' }, minIntervalMs: 750 });
   const live: Record<string, SearchOutcome> = {};
   const fresh: CorpusEntry[] = [];

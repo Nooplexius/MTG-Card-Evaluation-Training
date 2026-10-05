@@ -1,7 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { localResult, loadQueryFixtures, type Corpus } from '../../pipeline/corpus.ts';
+import { localResult, loadQueryFixtures, readCorpus } from '../../pipeline/corpus.ts';
 import { activeChips, chipGroups, toggleChip } from '../../src/lib/query/chips.ts';
 import { compile, evaluate } from '../../src/lib/query/engine.ts';
 import { numericStat } from '../../src/lib/query/local.ts';
@@ -10,7 +9,7 @@ import { ScryfallClient } from '../../src/lib/query/scryfall.ts';
 import { ROOT } from '../helpers/fixtures.ts';
 
 const fx = loadQueryFixtures(ROOT);
-const corpus = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/query/corpus.json'), 'utf8')) as Corpus;
+const corpus = readCorpus(join(ROOT, 'tests/fixtures/query/corpus.json.gz'));
 
 describe('differential corpus: local engine equals Scryfall on the pinned pool', () => {
   it('has at least 60 queries covering the required categories', () => {

@@ -1,8 +1,9 @@
 /**
- * Builds tests/fixtures/query/pool.json: display printings (as shipped) for TLA, OM1, TMT, DSK, OTJ and MKM,
+ * Builds tests/fixtures/query/pool.json.gz: display printings (as shipped) for TLA, OM1, TMT, DSK, OTJ and MKM,
  * joined with the pipeline's own code from the pinned fixtures. Run: npx tsx scripts/make-query-fixture.ts
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { normalizeApiRows } from '../pipeline/exports/normalizeApi.ts';
 import { buildJoinIndex, joinRow, type JoinMatch } from '../pipeline/join.ts';
@@ -52,7 +53,7 @@ function main() {
     p: toPrinting(j.match.display, setNames.get(j.match.display.set) ?? ''),
   }));
   mkdirSync(join(FIX, 'query'), { recursive: true });
-  writeFileSync(join(FIX, 'query/pool.json'), JSON.stringify(out));
+  writeFileSync(join(FIX, 'query/pool.json.gz'), gzipSync(JSON.stringify(out)));
   console.log(`pool: ${out.length} entries; set codes: ${[...new Set(out.map((e) => e.p.set))].sort().join(' ')}`);
 }
 
