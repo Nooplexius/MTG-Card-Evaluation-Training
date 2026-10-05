@@ -2,7 +2,8 @@
 import { imageUrl } from '../lib/card.ts';
 import { db, exportBackup, importBackup } from '../lib/db.ts';
 import { streaks } from '../lib/analytics.ts';
-import type { CardSnapshot, Evaluation, Exposure, Session, Skip } from '../lib/types.ts';
+import { COMPARE, nextLevel } from '../lib/compare.ts';
+import type { CardSnapshot, CompareRecord, Evaluation, Exposure, Session, Skip } from '../lib/types.ts';
 import { Analytics, type HistoryParams, type StatsParams } from './analyticsService.ts';
 import { Engine, type PlanRequest } from './engine.ts';
 import { InsightService } from './insightService.ts';
@@ -233,7 +234,33 @@ const api = {
     await db().filters.delete(id);
     return true;
   },
+  /** A compare-mode pair at the user's current level, avoiding the given pool keys. */
+  async comparePair(avoid: string[]) {
+    await initialized;
+    await engine.loadAll();
+    return engine.comparePair(nextLevel((await recentCompares(COMPARE.history)).map((c) => c.correct)), avoid);
+  },
+  /** Stores a compare pick; both cards' grades were shown, so both count as exposed. */
+  async saveCompare(rec: CompareRecord) {
+    await initialized;
+    await db().compares.add(rec);
+    await engine.expose([rec.leftOracle, rec.rightOracle], 'compare');
+    return compareSummary();
+  },
+  async compareSummary() {
+    return compareSummary();
+  },
 };
+
+async function recentCompares(n: number): Promise<CompareRecord[]> {
+  return (await db().compares.orderBy('ts').reverse().limit(n).toArray()).reverse();
+}
+
+async function compareSummary(): Promise<{ total: number; recentN: number; recentRight: number; level: number }> {
+  const recent = await recentCompares(COMPARE.history);
+  const last50 = recent.slice(-50);
+  return { total: await db().compares.count(), recentN: last50.length, recentRight: last50.filter((c) => c.correct).length, level: nextLevel(recent.map((c) => c.correct)) };
+}
 
 export type EngineApi = typeof api;
 

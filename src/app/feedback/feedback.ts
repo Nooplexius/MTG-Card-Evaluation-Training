@@ -43,6 +43,8 @@ export const FEEDBACK = {
   'drill.start': { sound: 'flourish', haptic: [10, 30, 10], motion: 'slide' },
   'drill.complete': { sound: 'complete', haptic: [12, 50, 24], motion: 'pulse' },
   'compare.pick': { sound: 'tink', haptic: [10], motion: 'stamp' },
+  'compare.right': { sound: 'exact', haptic: [10, 40, 18], motion: 'stamp' },
+  'compare.wrong': { sound: 'miss', haptic: [28], motion: 'nudge' },
   'link.open': { sound: 'tick', haptic: [5], motion: 'press' },
   'sort.change': { sound: 'tick', haptic: [5], motion: 'fade' },
   'input.type': { sound: 'none', haptic: 'none', motion: 'none', continuous: true },

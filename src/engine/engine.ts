@@ -1,3 +1,4 @@
+import { pickPair, type CompareCand } from '../lib/compare.ts';
 import type { Manifest, ManifestSet, SetFile, TagsFile } from '../lib/data.ts';
 import type { LoupeDB } from '../lib/db.ts';
 import { Pool, type PoolEntry } from '../lib/pool.ts';
@@ -274,6 +275,23 @@ export class Engine {
 
   requeue(key: string) {
     this.bag.requeue(key, this.rng);
+  }
+
+  /** A compare-mode pair from the practice pool (the filter and offline rules apply), preferring cards already shown. */
+  comparePair(level: number, avoid: string[]): { left: CardView; right: CardView; level: number; z: number } | null {
+    const cands: CompareCand[] = [];
+    const prefer = new Set<string>();
+    for (const c of this.candidates()) {
+      const e = this.pool.get(c.key);
+      if (!e) continue;
+      cands.push({ key: c.key, set: c.set, oracleId: c.oracleId, g: e.card.g, wr: e.card.s.gihWr, n: e.card.s.gih });
+      if (this.exposed.has(c.oracleId)) prefer.add(c.key);
+    }
+    const p = pickPair(cands, level, this.rng, { avoid: new Set(avoid), prefer });
+    if (!p) return null;
+    const left = this.view(p.left.key);
+    const right = this.view(p.right.key);
+    return left && right ? { left, right, level: p.level, z: p.z } : null;
   }
 
   /** Same set, similar role, clearly different grade; already-exposed cards first. */

@@ -16,6 +16,7 @@ const SettingsScreen = lazy(() => import('./screens/SettingsScreen.tsx').then((m
 const StatsScreen = lazy(() => import('./stats/StatsScreen.tsx').then((m) => ({ default: m.StatsScreen })));
 const InsightsScreen = lazy(() => import('./insights/InsightsScreen.tsx').then((m) => ({ default: m.InsightsScreen })));
 const HistoryScreen = lazy(() => import('./stats/HistoryScreen.tsx').then((m) => ({ default: m.HistoryScreen })));
+const CompareScreen = lazy(() => import('./compare/CompareScreen.tsx').then((m) => ({ default: m.CompareScreen })));
 
 function Shell() {
   const { route } = useRoute();
@@ -52,6 +53,7 @@ function Shell() {
           {route === 'stats' && <StatsScreen />}
           {route === 'history' && <HistoryScreen />}
           {route === 'insights' && <InsightsScreen />}
+          {route === 'compare' && <CompareScreen />}
         </Suspense>
       )}
     </>
