@@ -24,9 +24,15 @@ async function main() {
     today,
     offline: flag('offline', args),
     lastGoodUrl: arg('last-good', args),
+    no17Lands: flag('no-17lands', args),
   };
   switch (cmd) {
     case 'build': {
+      if (common.no17Lands && flag('fetch', args)) {
+        console.error('--fetch and --no-17lands contradict each other.');
+        process.exitCode = 1;
+        return;
+      }
       const { exitCode } = await runBuild({ ...common, fetch17: flag('fetch', args), dryRun: false });
       process.exitCode = exitCode;
       return;
@@ -52,7 +58,7 @@ async function main() {
       return;
     }
     default:
-      console.log('Usage: tsx pipeline/cli.ts <build|status|synth|corpus-record|corpus-drift> [--today YYYY-MM-DD] [--offline] [--fetch --data-branch DIR] [--last-good URL] [--out DIR]');
+      console.log('Usage: tsx pipeline/cli.ts <build|status|synth|corpus-record|corpus-drift> [--today YYYY-MM-DD] [--offline] [--no-17lands] [--fetch --data-branch DIR] [--last-good URL] [--out DIR]');
       process.exitCode = 1;
   }
 }

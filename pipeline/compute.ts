@@ -18,6 +18,8 @@ export interface PipelineConfig extends EligibilityRules {
   staleAfterDays: number;
   appName: string;
   appUrl: string;
+  /** Daily snapshots kept per set and format on the data branch (the one in use is always kept). */
+  keepSnapshots?: number;
   validation: ValidationConfig & { minMatchRate: number };
 }
 

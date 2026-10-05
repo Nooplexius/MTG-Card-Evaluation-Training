@@ -8,7 +8,7 @@ import { eligibility } from './eligibility.ts';
 import { CARDS_CSV_URL, indexCardsCsv, parseCardsCsv } from './inputs/cardsCsv.ts';
 import { SharedInputError, getJson } from './inputs/http.ts';
 import { bulkFile, loadCards, loadKeywordCatalog, loadOracleTags, loadSets, SCRYFALL_HEADERS, type ScryCard, type ScrySet } from './inputs/scryfall.ts';
-import { dailyFetch, readFetchState, readLatestFilters, releaseDatesFrom, type DataBranch } from './inputs/seventeen.ts';
+import { dailyFetch, pruneSnapshots, readFetchState, readLatestFilters, releaseDatesFrom, type DataBranch } from './inputs/seventeen.ts';
 import type { WisResponse } from './inputs/standard.ts';
 import { buildLimitedSet, standardToLimited, type SetsConfig } from './limitedSets.ts';
 import { renderStatus } from './status.ts';
@@ -24,6 +24,8 @@ export interface RunOptions {
   fetch17: boolean;
   /** Base URL of the deployed site, for reading back the last good manifest. */
   lastGoodUrl: string | null;
+  /** Never contact 17Lands (CI): cards.csv comes from the cache, or the committed test subset. */
+  no17Lands?: boolean;
   dryRun: boolean;
   quiet?: boolean;
 }
@@ -62,8 +64,8 @@ export interface SharedInputs {
   keywords: string[];
 }
 
-/** Loads every shared input; any failure is fatal for the run. */
-export async function loadSharedInputs(opts: { cacheDir: string; offline: boolean; today: string; setsCfg: SetsConfig }): Promise<SharedInputs> {
+/** Loads every shared input; any failure is fatal for the run. With `cardsCsvFallback`, cards.csv is never downloaded. */
+export async function loadSharedInputs(opts: { cacheDir: string; offline: boolean; today: string; setsCfg: SetsConfig; cardsCsvFallback?: string; log?: (m: string) => void }): Promise<SharedInputs> {
   const scryDir = join(opts.cacheDir, 'scryfall');
   const wisPath = join(opts.cacheDir, 'wis-standard.json');
   const wis = JSON.parse(await loadText('https://whatsinstandard.com/api/v6/standard.json', wisPath, opts.offline, 6)) as WisResponse;
@@ -78,7 +80,13 @@ export async function loadSharedInputs(opts: { cacheDir: string; offline: boolea
   const recentStd = new Set(scrySets.filter((s) => ['expansion', 'core'].includes(s.set_type) && (s.released_at ?? '') >= recentCut).map((s) => s.code));
   const cards = await loadCards(cardsPath, (c) => c.lang === 'en' && (relevant.has(c.set) || recentStd.has(c.set) || typeof c.arena_id === 'number'));
   const tags = await loadOracleTags(tagsPath);
-  const csvText = await loadText(CARDS_CSV_URL, join(opts.cacheDir, '17lands', 'cards.csv'), opts.offline, 24);
+  const csvPath = join(opts.cacheDir, '17lands', 'cards.csv');
+  let csvText: string;
+  if (opts.cardsCsvFallback) {
+    const local = existsSync(csvPath) ? csvPath : opts.cardsCsvFallback;
+    opts.log?.(`cards.csv read from ${local === csvPath ? 'the input cache' : 'the committed test subset'} (17Lands is not contacted).`);
+    csvText = readFileSync(local, 'utf8');
+  } else csvText = await loadText(CARDS_CSV_URL, csvPath, opts.offline, 24);
   const cardsCsv = indexCardsCsv(parseCardsCsv(csvText));
   const keywords = await loadKeywordCatalog(scryDir, opts.offline);
   return { wis, scrySets, cards, tags, cardsCsv, keywords };
@@ -126,7 +134,15 @@ export async function runBuild(opts: RunOptions): Promise<{ out: ComputeOutput; 
     if (!opts.quiet) console.log(m);
   };
   const { pipeline, sets: setsCfg } = readConfig(opts.root);
-  const shared = await loadSharedInputs({ cacheDir: opts.cacheDir, offline: opts.offline, today: opts.today, setsCfg });
+  if (opts.no17Lands && opts.fetch17) throw new Error('--fetch and --no-17lands contradict each other.');
+  const shared = await loadSharedInputs({
+    cacheDir: opts.cacheDir,
+    offline: opts.offline,
+    today: opts.today,
+    setsCfg,
+    cardsCsvFallback: opts.no17Lands ? join(opts.root, 'tests/fixtures/17lands/cards.csv') : undefined,
+    log: say,
+  });
   const db: DataBranch | null = opts.dataBranch ? { root: opts.dataBranch } : null;
 
   const sa = standardAnalysis(shared.wis, shared.cards, shared.scrySets, opts.today);
@@ -205,6 +221,11 @@ export async function runBuild(opts: RunOptions): Promise<{ out: ComputeOutput; 
   }
   let manifest: Manifest | null = null;
   if (!opts.dryRun) manifest = writeOutput(opts.outDir, out);
+  if (opts.fetch17 && db && !opts.dryRun) {
+    const inUse = new Set(out.status.sets.filter((s) => s.source === 'fetch' && s.dataDate).map((s) => `snapshots/${s.code}/${s.format}/${s.dataDate}.json`));
+    const removed = pruneSnapshots(db, pipeline.keepSnapshots ?? 14, inUse);
+    if (removed.length > 0) out.log.push(`Pruned ${removed.length} old snapshot(s) from the data branch (git history keeps them).`);
+  }
   if (!opts.quiet) {
     for (const l of out.log) console.log(`· ${l}`);
     console.log('');

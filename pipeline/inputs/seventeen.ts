@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { isApiCardResponse, type ApiCardResponse } from '../exports/normalizeApi.ts';
 import type { FetchLike } from './http.ts';
@@ -100,6 +100,25 @@ export function listSnapshots(db: DataBranch): Array<{ path: string; rel: string
     }
   }
   return out;
+}
+
+/** Deletes all but the newest `keep` snapshots of each set and format, never one listed in `inUse` (paths relative to the branch root). */
+export function pruneSnapshots(db: DataBranch, keep: number, inUse: Set<string>): string[] {
+  const groups = new Map<string, Array<{ path: string; rel: string; date: string }>>();
+  for (const s of listSnapshots(db)) {
+    const k = `${s.set}/${s.format}`;
+    groups.set(k, [...(groups.get(k) ?? []), s]);
+  }
+  const removed: string[] = [];
+  for (const list of groups.values()) {
+    list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    for (const s of list.slice(Math.max(0, keep))) {
+      if (inUse.has(s.rel)) continue;
+      rmSync(s.path);
+      removed.push(s.rel);
+    }
+  }
+  return removed;
 }
 
 export interface FetchTarget {

@@ -1,8 +1,8 @@
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { dailyFetch, FILTERS_URL, cardDataUrl, readFetchState, releaseDatesFrom, snapshotPath, type FetchTarget } from '../../pipeline/inputs/seventeen.ts';
+import { dailyFetch, FILTERS_URL, cardDataUrl, listSnapshots, pruneSnapshots, readFetchState, releaseDatesFrom, snapshotPath, type FetchTarget } from '../../pipeline/inputs/seventeen.ts';
 import { loadSnapshots } from '../../pipeline/exports/discover.ts';
 import { eligibility } from '../../pipeline/eligibility.ts';
 import { fixtures } from '../helpers/fixtures.ts';
@@ -118,5 +118,24 @@ describe('daily 17Lands fetch (fixtures only)', () => {
     const res = await dailyFetch({ enabled: false, today: '2026-10-12', targets: targets('2026-10-12'), db, userAgent: UA, fetch: m.fn });
     expect(m.calls).toHaveLength(0);
     expect(res.disabled).toBe(true);
+  });
+});
+
+describe('data branch snapshot pruning', () => {
+  it('keeps the newest snapshots per set and format, and always the one in use', () => {
+    const db = newDb();
+    const days = Array.from({ length: 20 }, (_, i) => `2026-09-${String(i + 1).padStart(2, '0')}`);
+    for (const d of days) {
+      for (const [set, format] of [['TLA', 'PremierDraft'], ['OM1', 'PickTwoDraft']]) {
+        const p = snapshotPath(db, set, format, d);
+        mkdirSync(dirname(p), { recursive: true });
+        writeFileSync(p, '{}');
+      }
+    }
+    const removed = pruneSnapshots(db, 14, new Set(['snapshots/TLA/PremierDraft/2026-09-02.json']));
+    expect(removed).toHaveLength(6 + 5);
+    const left = listSnapshots(db);
+    expect(left.filter((s) => s.set === 'OM1').map((s) => s.date).sort()).toEqual(days.slice(6));
+    expect(left.filter((s) => s.set === 'TLA').map((s) => s.date).sort()).toEqual(['2026-09-02', ...days.slice(6)]);
   });
 });
