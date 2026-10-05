@@ -1,10 +1,12 @@
 import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { AppProvider, useApp } from './AppContext.tsx';
+import { FilterScreen } from './filter/FilterScreen.tsx';
+import { applyPracticeQuery, filterLabel, usePracticeFilter } from './filter/practiceFilter.ts';
 import { MenuScreen } from './MenuScreen.tsx';
 import { PracticeScreen } from './practice/PracticeScreen.tsx';
 import { useRoute } from './router.ts';
-import { useReducedMotion } from './settings.ts';
+import { getSettings, useReducedMotion } from './settings.ts';
 
 const AboutScreen = lazy(() => import('./screens/AboutScreen.tsx').then((m) => ({ default: m.AboutScreen })));
 const DataScreen = lazy(() => import('./screens/DataScreen.tsx').then((m) => ({ default: m.DataScreen })));
@@ -13,6 +15,13 @@ const SettingsScreen = lazy(() => import('./screens/SettingsScreen.tsx').then((m
 function Shell() {
   const { route } = useRoute();
   const { manifest, error } = useApp();
+  const filter = usePracticeFilter();
+
+  useEffect(() => {
+    if (!manifest) return;
+    void applyPracticeQuery(getSettings().query);
+  }, [manifest]);
+
   if (error && !manifest) {
     return (
       <div className="screen">
@@ -25,11 +34,12 @@ function Shell() {
   return (
     <>
       <div hidden={route !== 'practice'} className="route-practice">
-        <PracticeScreen filterLabel="All sets" filterCount={total} filterVersion={0} />
+        <PracticeScreen filterLabel={filterLabel(filter.query)} filterCount={filter.count ?? total} filterVersion={filter.version} />
       </div>
       {route !== 'practice' && (
         <Suspense fallback={<div className="screen" aria-busy="true" />}>
           {route === 'menu' && <MenuScreen />}
+          {route === 'filter' && <FilterScreen />}
           {route === 'about' && <AboutScreen />}
           {route === 'data' && <DataScreen />}
           {route === 'settings' && <SettingsScreen />}

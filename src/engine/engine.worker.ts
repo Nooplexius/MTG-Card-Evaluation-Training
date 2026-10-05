@@ -108,6 +108,29 @@ const api = {
   async persist() {
     return typeof navigator.storage?.persist === 'function' ? navigator.storage.persist() : false;
   },
+  async practiceQuery(q: string) {
+    return engine.setPracticeQuery(q, (p) => server.emit('query-progress', p));
+  },
+  async countQuery(q: string) {
+    const r = await engine.queryPool(q, (p) => server.emit('query-progress', p));
+    return { ...r, matches: null, keys: null };
+  },
+  async queryKeys(q: string) {
+    const r = await engine.queryPool(q, (p) => server.emit('query-progress', p));
+    return { error: r.error, needsConnection: r.needsConnection, keys: r.keys };
+  },
+  async savedFilters() {
+    return db().filters.orderBy('name').toArray();
+  },
+  async saveFilter(name: string, query: string) {
+    const existing = await db().filters.where('name').equals(name).first();
+    await db().filters.put({ ...(existing ?? {}), name, query, createdAt: existing?.createdAt ?? Date.now() });
+    return true;
+  },
+  async deleteFilter(id: number) {
+    await db().filters.delete(id);
+    return true;
+  },
 };
 
 export type EngineApi = typeof api;
