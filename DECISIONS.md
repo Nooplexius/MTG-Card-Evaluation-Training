@@ -17,6 +17,39 @@ Judgment calls where the brief left room, or where live sources differed from it
 11. **Standard cross-check.** A Standard set agrees with Scryfall when at least half of its own booster printings (all printings if none are flagged booster) are `legal:standard`. The reverse check flags expansion or core sets with at least 50 printings that Scryfall marks mostly legal but whatsinstandard omits. On disagreement the set keeps its last deployed file (read back from the deployed site), else it is held back.
 12. **Unknown Standard sets.** A Standard code with no config entry becomes its own limited set with the default format, so new sets appear in the status output as soon as whatsinstandard lists them.
 
+13. **CI never contacts 17Lands.** `build --no-17lands` reads `cards.csv` from the input cache, or the committed 2,964-row test subset. The subset gives a byte-identical synthetic build (same data hash) because the synthetic samples join by name.
+14. **Data branch size.** Each build with `--fetch` keeps the newest 14 snapshots per set and format, plus whichever one is in use; git history keeps the rest.
+15. **When to deploy.** Only real data (never synthetic), only with the embargo setting on (the workflow refuses otherwise), and on scheduled runs only when the data hash changed. Pushes and manual runs always deploy. GitHub Pages must be enabled once; nothing else needs credentials.
+
 ## Product
 
-13. **Name.** The app is called Loupe (a jeweler's magnifier, for close appraisal).
+16. **Name.** The app is called Loupe (a jeweler's magnifier, for close appraisal).
+17. **Storage split.** IndexedDB (Dexie) lives only in the worker, so the UI thread never blocks on it. Settings are in localStorage because the first render needs them synchronously. Routing uses the URL hash, so static hosting needs no rewrite rules.
+18. **Query semantics.** These were checked against live Scryfall:
+    - Unquoted name words match diacritic-folded, punctuation-free substrings of the name or flavor name.
+    - `o:` ignores reminder text, also for regexes.
+    - Colors use card-level colors, else any face.
+    - Power, toughness and loyalty match any face; `*` counts as 0.
+    - Unknown keywords are sent to the API, where Scryfall ignores them with a warning, and Loupe shows that warning.
+    - Display keywords (`order:`, `unique:` and similar) do nothing locally.
+    - Each maximal API-only subtree is one search, restricted to the pool's set codes with `unique:prints`. A subtree whose terms Scryfall ignores entirely is dropped, as Scryfall would drop it.
+19. **Smart feedback model.** A joint ridge fit attenuated effects and left the intercept unidentified, so the engine does forward stepwise weighted least squares instead:
+    - Weights are 1/(τ² + SE²); effects are conditional, by residualizing on the selected facets; facet columns are ridge-shrunk.
+    - Thresholds: |effect| ≥ 0.5 steps, z ≥ 2.58 for main effects and 3.29 for interactions, effective n ≥ 8 for main effects.
+    - The simulation's second scenario plants removal −1.5 steps with a +0.8 offset rather than "big bodies": big bodies were about 5% of cards, too rare to reach 90% power in 400 evaluations.
+    - Result: planted effects found in 50/50 runs, unplanted ones in at most 2/50.
+20. **Drill mastery** means at least 7 of the last 8 drill cards within one step and |bias| ≤ 0.5 steps. A drill also ends after 20 cards.
+21. **Personal best** is a session's share of first looks within one step, counted when the session has at least 8 first looks.
+22. **Offline cache.** Upcoming cards' images are prefetched up to 240 a day. Offline, practice only draws cards whose image is cached, and skips one that still fails to load.
+23. **Rate limits.** Scryfall API calls are at least 600 ms apart in the app and 750 ms apart in scripts. A 429 pauses for 30 s (35 s in scripts) and is never retried in a loop. Responses are cached for 7 days.
+24. **Cold first visit.**
+    - A first-time visitor on the practice route gets a static copy of the practice screen with an inlined random starter card, painted before any JavaScript.
+    - The app script starts once that card's largest-contentful-paint entry arrives, or on the first tap, or after 3 s.
+    - The static screen uses local serif and sans fonts, so no font download competes with the card image. React swaps in Alegreya on mount.
+    - A grade tapped on the static screen is queued and committed with its original timestamp.
+25. **Compare mode.**
+    - Both cards come from the same set and format, because GIH WR is relative to a format.
+    - A pair is used only when its order is clear: at least 1 point and 2 standard errors apart.
+    - Difficulty is the grade gap between the cards, adjusted by a 2-down-1-up staircase (converges near 71% right).
+    - 70% of picks favor cards the user has already seen graded, because a compare reveal exposes both cards and would otherwise use up first looks.
+    - Compare picks are stored separately and do not enter evaluation stats.

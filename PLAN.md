@@ -1,61 +1,56 @@
 # PLAN
 
-Status: `[x]` done · `[~]` in progress · `[ ]` to do. Milestones follow the brief's priority order.
+Status: `[x]` done · `[~]` in progress · `[ ]` to do · `[!]` waiting on the owner. Milestones follow the brief's priority order.
 
 ## M0 · Setup
 - [x] Live checks: Scryfall bulk index, whatsinstandard, cards.csv HEAD, 17Lands dev fixtures (filters, TLA PremierDraft, OM1 PickTwoDraft)
-- [~] Scaffold: Vite + React + TS, Vitest, Playwright, tsx pipeline
-- [ ] PLAN.md, DECISIONS.md, DESIGN.md
+- [x] Scaffold: Vite + React + TS, Vitest, Playwright, tsx pipeline
+- [x] PLAN.md, DECISIONS.md, DESIGN.md
 
 ## M1 · Data pipeline
-- [ ] Config: `data/config/sets.json` (release dates, formats, aliases), `data/config/pipeline.json` (switches)
-- [ ] Shared inputs: Standard list, Scryfall sets + bulk default_cards + oracle_tags, cards.csv (cached, fail loudly)
-- [ ] CSV export parser (BOM, quotes, %, pp, blanks, optional column groups)
-- [ ] API row normalizer (same schema as exports)
-- [ ] Set inference (join chain ≥ 90%), format config + filename override, export date (name, else git commit)
-- [ ] Validation chain against previous data (columns, coverage, rows ≥ 95%, mean 52–61% and ±1.5, # GIH never shrinks)
-- [ ] Join chain (mtga id → arena_id, set names/printed names, Arena printings anywhere), display printing
-- [ ] Grades (17Lands formula), rank, SE, crowd gap
-- [ ] Standard rule + Scryfall cross-check, bonus folding, SPM→OM1
-- [ ] Eligibility: minDaysLive, embargo (+13 d), release dates from /data/filters with config fallback
-- [ ] Daily fetch (filters + card_data), one request per set per day, stop on 429/error, kill switch, snapshots on data branch
-- [ ] Output: manifest + per-set files + tags + status.json; last-good fallback from deployed manifest
-- [ ] Status command (live, held back, missing, refused, fetch failed, stale) with export links
-- [ ] Synthetic sample exports for when no real exports exist
-- [ ] Tests for all of the above
+- [x] Config: `data/config/sets.json` (release dates, formats, bonus mappings), `data/config/pipeline.json` (switches)
+- [x] Shared inputs: Standard list, Scryfall sets + bulk default_cards + oracle_tags, cards.csv (cached, fail loudly)
+- [x] CSV export parser (BOM, quotes, %, pp, blanks, optional column groups) and API row normalizer
+- [x] Set inference, format config + filename override, export date (name, else git add date)
+- [x] Validation chain against previous data; newest valid export wins, refused ones fall back
+- [x] Join chain and display printing (bonus sheets, OM1, DFC names); zero unmatched on the synthetic samples
+- [x] Grades (17Lands formula), rank, SE, crowd gap
+- [x] Standard rule + Scryfall cross-check, BIG→OTJ, SPM→OM1
+- [x] Eligibility: minDaysLive, embargo (+13 days), release dates from /data/filters with config fallback
+- [x] Daily fetch with fetch-state on the data branch; snapshot pruning (newest 14 per set and format)
+- [x] Output: manifest + hashed per-set files + tags + status.json; last-good fallback from the deployed manifest
+- [x] Status command with export links; synthetic samples; `--no-17lands` for CI
+- [x] Tests for all of the above
 
 ## M2 · Core loop
-- [ ] DESIGN.md (concept, palette, type, grade scale, motion, sound)
-- [ ] App shell, data loading, card view (63:88 reserved, zoom, DFC flip, text view)
-- [ ] Grade pad (commit on pointer-up, slide-off cancels), reveal (grade diff, GIH WR, rank, n, uncertainty, why-context, contrasts, links)
-- [ ] Persistence (Dexie schema v1 + migrations), sessions, resume, skip
-- [ ] Attribution line on practice screen
+- [x] DESIGN.md (concept, palette, type, grade scale, motion, sound)
+- [x] Card view (63:88 reserved, zoom, DFC flip, text view), 5×3 grade key bed, reveal with contrasts
+- [x] Persistence (Dexie in the worker), sessions, resume, skip; attribution on the practice screen
 
 ## M3 · Shared filter
-- [ ] Parser → AST, local evaluator (exact terms), app-only `lset:` and `crowd:`
-- [ ] API resolution for other subtrees (rate-limited, cached, progress)
-- [ ] Filter component (query field + chips + live count), warnings and errors
-- [ ] Differential corpus ≥ 60 queries with recorded fixtures; live drift job
+- [x] Parser, exact local evaluator, app-only `lset:` and `crowd:`
+- [x] API resolution for other subtrees (rate-limited, cached, progress, offline note)
+- [x] Filter screen (query field, chips, live count, saved filters); same filter for practice, stats, history, drills, compare
+- [x] Differential corpus: 152 queries, equal to live Scryfall; weekly drift workflow
 
 ## M4 · Stats
-- [ ] Worker analytics: MAE, exact %, within-one %, bias, calibration, rank correlation, streaks, trends
-- [ ] Learning curve, calibration plot, confusion heatmap, facet table, per-set table, history
+- [x] Headline first-look vs. review metrics, learning curve, calibration plot, confusion heatmap, facet and set tables, history
 
 ## M5 · Learning engine
-- [ ] Exposure log, first-look definition, probes (1 in 5)
-- [ ] Adaptive scheduler (ARTS-style), random mode shuffle bag, selection reason + probability
-- [ ] Smart feedback (calibration + ridge facet effects, thresholds, behavioral insights)
-- [ ] Simulation test (50 users × 400 evals)
-- [ ] Drills (mastery/N, shrunken pre-drill baseline), session summary, streak/goal/personal bests
+- [x] Exposure log, first looks, uniform probes (1 in 5)
+- [x] Adaptive scheduler, Random mode shuffle bag, selection reason + probability
+- [x] Smart feedback (stepwise weighted fit, calibration, behavioral insights) passing the 50 × 400 simulation
+- [x] Drills with mastery, session summaries, streaks, daily goal, personal best
 
 ## M6 · Feel, offline, budgets
-- [ ] Feedback layer (sound, haptics, motion) with coverage test
-- [ ] PWA (install prompt, iOS prompt), offline practice from cached images, rolling cache
-- [ ] Playwright budgets (4× CPU), Lighthouse mobile, a11y checks
+- [x] Feedback layer (sound, haptics, motion) with a coverage test
+- [x] PWA: install prompt, offline practice from cached images, rolling prefetch, backup export/import
+- [x] Playwright budgets under 4× CPU; Lighthouse mobile (Performance 99–100, Accessibility 100, LCP < 2 s)
 
 ## M7 · Ship
-- [ ] GitHub Actions: CI, daily data + deploy, corpus drift
-- [ ] README
+- [x] GitHub Actions: CI, daily data + deploy, Scryfall drift check
+- [x] README
+- [!] Enable GitHub Pages (Settings → Pages → Source: GitHub Actions) and run "Data and deploy" once
 
 ## Stretch
-- [ ] Compare mode ("which has the higher GIH WR?")
+- [x] Compare mode ("which has the higher GIH WR?")
