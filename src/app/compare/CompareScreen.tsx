@@ -177,6 +177,15 @@ export function CompareScreen() {
                 {score}
               </span>
             </div>
+            {!pair &&
+              (['left', 'right'] as const).map((side) => (
+                <div key={side} className="compare__col" aria-hidden="true">
+                  <div className="compare__card">
+                    <div className="card-box card-box--empty" />
+                  </div>
+                  <div className="compare__info" />
+                </div>
+              ))}
             {pair &&
               (['left', 'right'] as const).map((side) => (
                 <Column

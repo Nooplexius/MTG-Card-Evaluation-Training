@@ -8,15 +8,38 @@ import { useRoute } from './router.ts';
 import { getSettings, useReducedMotion } from './settings.ts';
 
 const loadMotion = () => import('./motionFeatures.ts').then((m) => m.default);
-const MenuScreen = lazy(() => import('./MenuScreen.tsx').then((m) => ({ default: m.MenuScreen })));
-const FilterScreen = lazy(() => import('./filter/FilterScreen.tsx').then((m) => ({ default: m.FilterScreen })));
-const AboutScreen = lazy(() => import('./screens/AboutScreen.tsx').then((m) => ({ default: m.AboutScreen })));
-const DataScreen = lazy(() => import('./screens/DataScreen.tsx').then((m) => ({ default: m.DataScreen })));
-const SettingsScreen = lazy(() => import('./screens/SettingsScreen.tsx').then((m) => ({ default: m.SettingsScreen })));
-const StatsScreen = lazy(() => import('./stats/StatsScreen.tsx').then((m) => ({ default: m.StatsScreen })));
-const InsightsScreen = lazy(() => import('./insights/InsightsScreen.tsx').then((m) => ({ default: m.InsightsScreen })));
-const HistoryScreen = lazy(() => import('./stats/HistoryScreen.tsx').then((m) => ({ default: m.HistoryScreen })));
-const CompareScreen = lazy(() => import('./compare/CompareScreen.tsx').then((m) => ({ default: m.CompareScreen })));
+const screens = {
+  menu: () => import('./MenuScreen.tsx').then((m) => ({ default: m.MenuScreen })),
+  filter: () => import('./filter/FilterScreen.tsx').then((m) => ({ default: m.FilterScreen })),
+  about: () => import('./screens/AboutScreen.tsx').then((m) => ({ default: m.AboutScreen })),
+  data: () => import('./screens/DataScreen.tsx').then((m) => ({ default: m.DataScreen })),
+  settings: () => import('./screens/SettingsScreen.tsx').then((m) => ({ default: m.SettingsScreen })),
+  stats: () => import('./stats/StatsScreen.tsx').then((m) => ({ default: m.StatsScreen })),
+  insights: () => import('./insights/InsightsScreen.tsx').then((m) => ({ default: m.InsightsScreen })),
+  history: () => import('./stats/HistoryScreen.tsx').then((m) => ({ default: m.HistoryScreen })),
+  compare: () => import('./compare/CompareScreen.tsx').then((m) => ({ default: m.CompareScreen })),
+};
+const MenuScreen = lazy(screens.menu);
+const FilterScreen = lazy(screens.filter);
+const AboutScreen = lazy(screens.about);
+const DataScreen = lazy(screens.data);
+const SettingsScreen = lazy(screens.settings);
+const StatsScreen = lazy(screens.stats);
+const InsightsScreen = lazy(screens.insights);
+const HistoryScreen = lazy(screens.history);
+const CompareScreen = lazy(screens.compare);
+
+/** Loads the other screens' code one chunk per idle period, so opening any of them later never shows a blank frame. */
+function prefetchScreens() {
+  const queue = Object.values(screens);
+  const idle = (fn: () => void) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 200));
+  const step = () => {
+    const next = queue.shift();
+    if (!next) return;
+    void next().finally(() => idle(step));
+  };
+  idle(step);
+}
 
 function Shell() {
   const { route } = useRoute();
@@ -27,6 +50,8 @@ function Shell() {
   useEffect(() => {
     if (!manifest) return;
     void applyPracticeQuery(getSettings().query);
+    const t = setTimeout(prefetchScreens, 4000);
+    return () => clearTimeout(t);
   }, [manifest]);
 
   if (error && !manifest) {
