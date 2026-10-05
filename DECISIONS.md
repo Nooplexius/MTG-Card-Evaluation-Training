@@ -17,7 +17,7 @@ Judgment calls where the brief left room, or where live sources differed from it
 11. **Standard cross-check.** A Standard set agrees with Scryfall when at least half of its own booster printings (all printings if none are flagged booster) are `legal:standard`. The reverse check flags expansion or core sets with at least 50 printings that Scryfall marks mostly legal but whatsinstandard omits. On disagreement the set keeps its last deployed file (read back from the deployed site), else it is held back.
 12. **Unknown Standard sets.** A Standard code with no config entry becomes its own limited set with the default format, so new sets appear in the status output as soon as whatsinstandard lists them.
 
-13. **CI never contacts 17Lands.** `build --no-17lands` reads `cards.csv` from the input cache, or the committed 2,964-row test subset. The subset gives a byte-identical synthetic build (same data hash) because the synthetic samples join by name.
+13. **CI never contacts 17Lands.** `build --no-17lands` reads `cards.csv` from the input cache, or the committed 2,964-row test subset. The subset gives the same build as the full file (same data hash), both for the synthetic samples and for the real exports.
 14. **Data branch size.** Each build with `--fetch` keeps the newest 14 snapshots per set and format, plus whichever one is in use; git history keeps the rest.
 15. **When to deploy.** Only real data (never synthetic), only with the embargo setting on (the workflow refuses otherwise), and on scheduled runs only when the data hash changed. Pushes and manual runs always deploy. GitHub Pages must be enabled once; nothing else needs credentials.
 
@@ -58,3 +58,20 @@ Judgment calls where the brief left room, or where live sources differed from it
     - Difficulty is the grade gap between the cards, adjusted by a 2-down-1-up staircase (converges near 71% right).
     - 70% of picks favor cards the user has already seen graded, because a compare reveal exposes both cards and would otherwise use up first looks.
     - Compare picks are stored separately and do not enter evaluation stats.
+
+## Data, from the first real exports
+
+26. **First exports.** On 2026-10-05, at the owner's request, the agent downloaded the 18 finished sets' Card Data exports, the same way the owner would:
+    - It opened each set's Card Data page in a browser and used **Export data → Download as CSV**.
+    - It checked first that the page showed All users, All Time, and no color or rarity filter.
+    - It went one set at a time, 15 s apart, with a User-Agent naming Loupe.
+    - It didn't call the API, whose responses say the data is for use on 17Lands.com only.
+    - Each file's rows match the table shown on its page. Files are named `card-ratings-DATE SET.csv`.
+    - FRA waits for its embargo (2026-10-12), after which the daily fetch takes over.
+27. **Set detection with reprint slots.** On Arena, MKM's boosters have a List slot: 40 of its 321 export rows are older cards in their original printings. An export is assigned to a set when:
+    - the whole join chain matches at least 90% of its rows;
+    - the set's own printings match at least 50%;
+    - no other set's own printings are within 30 points.
+
+    Before, only the set's own printings counted toward the 90%, which left MKM unassigned at 87.5%. A card found only through Arena printings elsewhere shows the newest printing released by the set's release date, as it was drafted.
+28. **MSH's bonus sheet** is Marvel Universe (MAR, 100 cards). It has no parent set on Scryfall, so it's configured as an extra bonus sheet, like OM1's OMB.
