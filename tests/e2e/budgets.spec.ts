@@ -88,7 +88,7 @@ test('core loop budgets under 4× CPU throttling: reveal < 50 ms, next card < 10
       requestAnimationFrame(tick);
     });
     const commitAt = await page.evaluate(() => performance.now());
-    reveals.push(await timeReveal(page, ['C', 'B', 'D plus', 'A minus', 'C minus'][i]));
+    reveals.push(await timeReveal(page, ['C', 'B', 'D+', 'A−', 'C−'][i]));
     const revealDone = await revealSettled(page, commitAt);
     const n = await timeNext(page);
     nexts.push(n.shown);

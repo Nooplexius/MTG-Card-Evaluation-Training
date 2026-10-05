@@ -124,8 +124,9 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
         <Tap fb="nav.open" className="icon-btn" onTap={() => go('menu')} aria-label="Menu">
           <Icon name="menu" />
         </Tap>
-        <Tap fb="nav.open" className="filter-chip" onTap={() => go('filter')} aria-label={`Practice filter: ${filterLabel}. Change`}>
+        <Tap fb="nav.open" className="filter-chip" onTap={() => go('filter')}>
           <Icon name="filter" size={18} />
+          <span className="sr-only">Practice filter: </span>
           <span className="filter-chip__text">{drill ? `Drill · ${drill.label}` : filterLabel}</span>
           {filterCount !== null && <span className="filter-chip__count num">{filterCount.toLocaleString('en-US')}</span>}
         </Tap>
@@ -139,7 +140,7 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
             fb={settings.mode === 'random' ? 'toggle.off' : 'toggle.on'}
             className="mode-btn"
             onTap={() => setSettings({ mode: settings.mode === 'random' ? 'adaptive' : 'random' })}
-            aria-label={`Mode: ${settings.mode === 'random' ? 'Random' : 'Adaptive'}. Switch`}
+            aria-label={`${settings.mode === 'random' ? 'Random' : 'Adaptive'} mode, tap to switch`}
           >
             <Icon name={settings.mode === 'random' ? 'shuffle' : 'target'} size={18} />
             <span>{settings.mode === 'random' ? 'Random' : 'Adaptive'}</span>

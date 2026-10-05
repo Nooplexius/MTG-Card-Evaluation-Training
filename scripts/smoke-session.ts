@@ -9,7 +9,7 @@ const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 await page.goto(base);
-const grades = ['B plus', 'C', 'C minus', 'B', 'D plus', 'A minus', 'C plus', 'B minus', 'D', 'C'];
+const grades = ['B+', 'C', 'C−', 'B', 'D+', 'A−', 'C+', 'B−', 'D', 'C'];
 for (let i = 0; i < 20; i++) {
   await page.locator(`button[aria-label="${grades[i % grades.length]}"]`).click({ timeout: 15000 });
   await page.locator('button.next').waitFor({ timeout: 15000 });

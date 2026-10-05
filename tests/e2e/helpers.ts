@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
-export const GRADES = ['F', 'D minus', 'D', 'D plus', 'C minus', 'C', 'C plus', 'B minus', 'B', 'B plus', 'A minus', 'A', 'A plus'];
+/** Grade key names as shown (minus is U+2212). */
+export const GRADES = ['F', 'D−', 'D', 'D+', 'C−', 'C', 'C+', 'B−', 'B', 'B+', 'A−', 'A', 'A+'];
 
 /** Waits until a card is on screen with its image decoded. */
 export async function cardReady(page: Page): Promise<void> {

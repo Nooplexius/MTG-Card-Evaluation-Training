@@ -95,7 +95,8 @@ export function GradePad({ onCommit, disabled, showHints }: { onCommit: (g: numb
             type="button"
             className={`key${pressed === g ? ' is-pressed' : ''}${pending === letter ? ' is-pending' : ''}${span ? ' key--tall' : ''}`}
             style={{ gridColumn: col, gridRow: span ? `${row} / span ${span}` : row, ['--gc' as string]: `var(--g${g})` }}
-            aria-label={gradeSpoken(g)}
+            aria-label={gradeLabel(g)}
+            title={gradeSpoken(g)}
             disabled={disabled}
             onPointerDown={(e) => {
               if (e.button !== 0) return;

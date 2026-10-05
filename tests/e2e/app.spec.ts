@@ -57,7 +57,7 @@ test('practice keeps working offline from cached cards', async ({ page, context 
   await expect(page.locator('.credit')).toContainText('Offline');
   for (let i = 0; i < 4; i++) {
     await cardReady(page);
-    await grade(page, 'C plus');
+    await grade(page, 'C+');
     await next(page);
   }
   await page.goto('/#/history');
