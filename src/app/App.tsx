@@ -1,5 +1,5 @@
 import { LazyMotion, MotionConfig } from 'motion/react';
-import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
+import { lazy, Suspense, useDeferredValue, useEffect, useState, type ComponentType } from 'react';
 import { AppProvider, useApp } from './AppContext.tsx';
 import { endDrill, useDrill } from './drillStore.ts';
 import { applyPracticeQuery, filterLabel, usePracticeFilter } from './filter/practiceFilter.ts';
@@ -48,8 +48,14 @@ const InsightsScreen = screens.insights.Screen;
 const HistoryScreen = screens.history.Screen;
 const CompareScreen = screens.compare.Screen;
 
-/** Loads the other screens' code one chunk per idle period, so opening any of them later never shows a blank frame. */
+/**
+ * Loads the screens' code one chunk per idle period. It starts the first time the user leaves practice, so it never
+ * competes with the core loop.
+ */
+let prefetched = false;
 function prefetchScreens() {
+  if (prefetched) return;
+  prefetched = true;
   const queue = Object.values(screens).map((s) => s.load);
   const idle = (fn: () => void) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 200));
   const step = () => {
@@ -63,7 +69,9 @@ function prefetchScreens() {
 }
 
 function Shell() {
-  const { route } = useRoute();
+  const current = useRoute();
+  /** While a screen's code loads, the previous screen stays up instead of a blank fallback. */
+  const { route } = useDeferredValue(current);
   const { manifest, error } = useApp();
   const filter = usePracticeFilter();
   const drill = useDrill();
@@ -71,9 +79,11 @@ function Shell() {
   useEffect(() => {
     if (!manifest) return;
     void applyPracticeQuery(getSettings().query);
-    const t = setTimeout(prefetchScreens, 4000);
-    return () => clearTimeout(t);
   }, [manifest]);
+
+  useEffect(() => {
+    if (current.route !== 'practice') prefetchScreens();
+  }, [current.route]);
 
   if (error && !manifest) {
     return (
