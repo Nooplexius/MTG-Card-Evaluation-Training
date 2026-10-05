@@ -40,6 +40,8 @@ export interface ComputeInput {
   cards: ScryCard[];
   tags: OracleTag[];
   cardsCsv: Map<string, Map<string, number[]>>;
+  /** Lowercase values Scryfall's kw: accepts. */
+  keywords: string[];
   exports: SeventeenData[];
   exportErrors: DiscoverError[];
   snapshots: SeventeenData[];
@@ -420,7 +422,7 @@ export function computeBuild(inp: ComputeInput): ComputeOutput {
   return {
     manifest: { schema: DATA_SCHEMA, generatedAt: inp.generatedAt, today, synthetic, sets: manifestSets, starters, notes },
     setFiles,
-    tags: { schema: DATA_SCHEMA, slugs: tagIndex.slugs, labels: tagIndex.labels, aliases, known },
+    tags: { schema: DATA_SCHEMA, slugs: tagIndex.slugs, labels: tagIndex.labels, aliases, known, keywords: inp.keywords },
     status,
     unmatched: unmatchedAll,
     log,

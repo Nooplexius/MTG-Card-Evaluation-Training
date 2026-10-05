@@ -30,6 +30,7 @@ export interface Fixtures {
   om1: ApiCardResponse;
   setsCfg: SetsConfig;
   pipeline: PipelineConfig;
+  keywords: string[];
 }
 
 let cached: Fixtures | null = null;
@@ -48,6 +49,7 @@ export function fixtures(): Fixtures {
     om1: json<ApiCardResponse>('17lands/card_data_OM1_PickTwoDraft.json'),
     setsCfg: JSON.parse(readFileSync(join(ROOT, 'data/config/sets.json'), 'utf8')) as SetsConfig,
     pipeline: JSON.parse(readFileSync(join(ROOT, 'data/config/pipeline.json'), 'utf8')) as PipelineConfig,
+    keywords: json<string[]>('scryfall/keywords.json'),
   };
   return cached;
 }

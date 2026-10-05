@@ -7,7 +7,7 @@ import { discoverExports, loadSnapshots } from './exports/discover.ts';
 import { eligibility } from './eligibility.ts';
 import { CARDS_CSV_URL, indexCardsCsv, parseCardsCsv } from './inputs/cardsCsv.ts';
 import { SharedInputError, getJson } from './inputs/http.ts';
-import { bulkFile, loadCards, loadOracleTags, loadSets, SCRYFALL_HEADERS, type ScryCard, type ScrySet } from './inputs/scryfall.ts';
+import { bulkFile, loadCards, loadKeywordCatalog, loadOracleTags, loadSets, SCRYFALL_HEADERS, type ScryCard, type ScrySet } from './inputs/scryfall.ts';
 import { dailyFetch, readFetchState, readLatestFilters, releaseDatesFrom, type DataBranch } from './inputs/seventeen.ts';
 import type { WisResponse } from './inputs/standard.ts';
 import { buildLimitedSet, standardToLimited, type SetsConfig } from './limitedSets.ts';
@@ -59,6 +59,7 @@ export interface SharedInputs {
   cards: ScryCard[];
   tags: Awaited<ReturnType<typeof loadOracleTags>>;
   cardsCsv: Map<string, Map<string, number[]>>;
+  keywords: string[];
 }
 
 /** Loads every shared input; any failure is fatal for the run. */
@@ -79,7 +80,8 @@ export async function loadSharedInputs(opts: { cacheDir: string; offline: boolea
   const tags = await loadOracleTags(tagsPath);
   const csvText = await loadText(CARDS_CSV_URL, join(opts.cacheDir, '17lands', 'cards.csv'), opts.offline, 24);
   const cardsCsv = indexCardsCsv(parseCardsCsv(csvText));
-  return { wis, scrySets, cards, tags, cardsCsv };
+  const keywords = await loadKeywordCatalog(scryDir, opts.offline);
+  return { wis, scrySets, cards, tags, cardsCsv, keywords };
 }
 
 async function readLastGood(url: string | null, wanted: string[]): Promise<{ manifest: Manifest; setFiles: Map<string, SetFile> } | null> {
@@ -187,6 +189,7 @@ export async function runBuild(opts: RunOptions): Promise<{ out: ComputeOutput; 
     cards: shared.cards,
     tags: shared.tags,
     cardsCsv: shared.cardsCsv,
+    keywords: shared.keywords,
     exports: exp.data,
     exportErrors: [...exp.errors, ...snaps.errors, ...syn.errors],
     snapshots: snaps.data,

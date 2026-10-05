@@ -5,6 +5,7 @@
 export interface Face {
   name: string;
   printed_name?: string;
+  flavor_name?: string;
   mana_cost?: string;
   cmc?: number;
   type_line?: string;
@@ -30,6 +31,8 @@ export interface Printing {
   oracle_id: string;
   name: string;
   printed_name?: string;
+  /** Universes Beyond in-world name; Scryfall's name search matches it. */
+  flavor_name?: string;
   lang: string;
   released_at: string;
   layout: string;

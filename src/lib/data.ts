@@ -116,6 +116,8 @@ export interface TagsFile {
   aliases: Record<string, string>;
   /** Every oracle tag slug Scryfall knows. */
   known: string[];
+  /** Scryfall keyword abilities, keyword actions and ability words (lowercase): the values kw: accepts. */
+  keywords: string[];
 }
 
 export type SetState = 'live' | 'held-back' | 'missing' | 'refused' | 'fetch-failed' | 'stale';

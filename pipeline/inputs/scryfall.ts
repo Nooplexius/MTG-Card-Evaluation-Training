@@ -121,6 +121,17 @@ export async function loadSets(cacheDir: string, offline: boolean): Promise<Scry
   return resp.data;
 }
 
+/** Keyword abilities, keyword actions and ability words: the values Scryfall's kw: accepts. */
+export async function loadKeywordCatalog(cacheDir: string, offline: boolean): Promise<string[]> {
+  const out = new Set<string>();
+  for (const c of ['keyword-abilities', 'keyword-actions', 'ability-words']) {
+    const resp = await cachedJson<{ data: string[] }>(`https://api.scryfall.com/catalog/${c}`, join(cacheDir, `catalog-${c}.json`), SCRYFALL_HEADERS, 24, offline);
+    if (!Array.isArray(resp.data) || resp.data.length < 20) throw new SharedInputError(`Scryfall catalog ${c} looks wrong`);
+    for (const k of resp.data) out.add(k.toLowerCase());
+  }
+  return [...out].sort();
+}
+
 export function frontName(c: { name: string; card_faces?: Array<{ name: string }> }): string {
   return c.card_faces?.[0]?.name ?? c.name.split(' // ')[0];
 }
