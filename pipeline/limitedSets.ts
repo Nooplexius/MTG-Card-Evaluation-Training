@@ -24,7 +24,9 @@ export interface LimitedSet {
   main: string;
   /** Bonus-sheet Scryfall codes drafted inside this set (children by parent_set_code plus configured extras). */
   bonus: string[];
-  /** Release date of the main Scryfall set; Special Guests printings released that day belong to this set. */
+  /** Release date of the main Scryfall set. */
+  released: string | null;
+  /** Set when a Special Guests wave was released the same day as the main set; those printings belong to it. */
   spgDate: string | null;
   /** Codes whose printings may be display printings, in preference order. */
   displayCodes: string[];
@@ -55,6 +57,7 @@ export function buildLimitedSet(code: string, cfg: SetsConfig, sets: ScrySet[], 
     configRelease: entry.arenaRelease ?? null,
     main,
     bonus,
+    released: mainSet?.released_at ?? null,
     spgDate: hasSpgWave ? spgDate : null,
     displayCodes,
     cardsCsvCodes,
