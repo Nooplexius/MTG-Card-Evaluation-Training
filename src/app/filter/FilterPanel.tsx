@@ -27,7 +27,7 @@ export function FilterPanel({ value, onChange, count, unit = 'cards' }: FilterPa
   const { manifest } = useApp();
   const groups = useMemo(() => chipGroups((manifest?.sets ?? []).map((s) => ({ code: s.code, name: s.name }))), [manifest]);
   const active = useMemo(() => activeChips(value, groups), [value, groups]);
-  const [res, setRes] = useState<CountResult | null>(null);
+  const [res, setRes] = useState<(CountResult & { query: string }) | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [saved, setSaved] = useState<Array<{ id?: number; name: string; query: string }>>([]);
   const [naming, setNaming] = useState<string | null>(null);
@@ -50,7 +50,7 @@ export function FilterPanel({ value, onChange, count, unit = 'cards' }: FilterPa
       const r = await count(value);
       if (my !== seq.current) return;
       setProgress(null);
-      setRes(r);
+      setRes({ ...r, query: value });
     }, 220);
     return () => clearTimeout(t);
   }, [value, count]);
@@ -86,7 +86,7 @@ export function FilterPanel({ value, onChange, count, unit = 'cards' }: FilterPa
         {progress ? (
           <span className="filter__progress">{progress}</span>
         ) : res && res.count !== null && !res.error ? (
-          <span className="filter__count num">
+          <span className={`filter__count num${res.query === value ? '' : ' is-stale'}`} data-query={res.query}>
             <b>{res.count.toLocaleString('en-US')}</b> {unit}
           </span>
         ) : null}

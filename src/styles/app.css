@@ -1144,6 +1144,12 @@
   font-size: var(--fs-small);
   color: var(--bone-2);
 }
+.filter__count {
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.filter__count.is-stale {
+  opacity: 0.45;
+}
 .filter__count b {
   color: var(--bone);
   font-size: 1.1rem;

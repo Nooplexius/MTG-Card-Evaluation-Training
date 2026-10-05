@@ -13,8 +13,9 @@ test('a full session, a query filter, stats and insights, and progress that surv
   await page.getByRole('button', { name: 'New session' }).click();
   await page.goto('/#/filter');
   await page.getByLabel('Scryfall search').fill('t:creature c:r');
-  await expect(page.locator('.filter__count')).toContainText('cards');
-  const count = Number((await page.locator('.filter__count b').innerText()).replace(/,/g, ''));
+  const counted = page.locator('.filter__count[data-query="t:creature c:r"]');
+  await expect(counted).toContainText('cards');
+  const count = Number((await counted.locator('b').innerText()).replace(/,/g, ''));
   expect(count).toBeGreaterThan(20);
   expect(count).toBeLessThan(5014);
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
@@ -24,8 +25,9 @@ test('a full session, a query filter, stats and insights, and progress that surv
   await next(page);
   for (let i = 0; i < 3; i++) {
     await cardReady(page);
-    const type = await page.locator('.card-text__type').first().textContent({ timeout: 5000 });
-    expect(type ?? '').toMatch(/Creature/);
+    await expect(page.locator('.card-text__type').first()).toBeAttached();
+    const types = await page.locator('.card-text__type').allTextContents();
+    expect(types.join(' // ')).toMatch(/Creature/);
     await grade(page, 'B');
     await next(page);
   }
