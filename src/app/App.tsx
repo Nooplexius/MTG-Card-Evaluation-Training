@@ -99,19 +99,17 @@ function Shell() {
       <div hidden={route !== 'practice'} className="route-practice">
         <PracticeScreen filterLabel={filterLabel(filter.query)} filterCount={drill ? drill.keys.length : (filter.count ?? total)} filterVersion={filter.version} drill={drill} onEndDrill={endDrill} />
       </div>
-      {route !== 'practice' && (
-        <Suspense fallback={<div className="screen" aria-busy="true" />}>
-          {route === 'menu' && <MenuScreen />}
-          {route === 'filter' && <FilterScreen />}
-          {route === 'about' && <AboutScreen />}
-          {route === 'data' && <DataScreen />}
-          {route === 'settings' && <SettingsScreen />}
-          {route === 'stats' && <StatsScreen />}
-          {route === 'history' && <HistoryScreen />}
-          {route === 'insights' && <InsightsScreen />}
-          {route === 'compare' && <CompareScreen />}
-        </Suspense>
-      )}
+      <Suspense fallback={<div className="screen" aria-busy="true" />}>
+        {route === 'menu' && <MenuScreen />}
+        {route === 'filter' && <FilterScreen />}
+        {route === 'about' && <AboutScreen />}
+        {route === 'data' && <DataScreen />}
+        {route === 'settings' && <SettingsScreen />}
+        {route === 'stats' && <StatsScreen />}
+        {route === 'history' && <HistoryScreen />}
+        {route === 'insights' && <InsightsScreen />}
+        {route === 'compare' && <CompareScreen />}
+      </Suspense>
     </>
   );
 }
