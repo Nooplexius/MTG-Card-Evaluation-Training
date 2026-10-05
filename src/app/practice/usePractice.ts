@@ -102,14 +102,21 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     return s;
   }, [opts.drillId]);
 
+  const versionRef = useRef(opts.filterVersion);
   const refill = useCallback(async () => {
     if (planning.current) return planning.current;
     const p = (async () => {
-      const need = QUEUE - queue.current.length;
-      if (need <= 0) return;
-      const exclude = [currentRef.current?.key, ...queue.current.map((q) => q.view.key)].filter((k): k is string => !!k);
-      await e.call('waitAll');
-      const sels = await e.call('plan', { mode: modeRef.current, n: need, exclude, drillKeys: opts.drillKeys });
+      let sels: Selection[] = [];
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const need = QUEUE - queue.current.length;
+        if (need <= 0) return;
+        const version = versionRef.current;
+        const exclude = [currentRef.current?.key, ...queue.current.map((q) => q.view.key)].filter((k): k is string => !!k);
+        await e.call('waitAll');
+        sels = await e.call('plan', { mode: modeRef.current, n: need, exclude, drillKeys: opts.drillKeys });
+        if (version === versionRef.current) break;
+        sels = [];
+      }
       queue.current.push(...sels);
       for (const s of sels) void preloadImage(cardImageUrl(s.view.card.p)).catch(() => {});
       const ses = sessionRef.current;
@@ -182,10 +189,8 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
   }, [manifest, opts.drillId]);
 
   // A new filter or mode replans the upcoming cards (the card on screen stays).
-  const lastVersion = useRef(opts.filterVersion);
   useEffect(() => {
-    if (lastVersion.current === opts.filterVersion) return;
-    lastVersion.current = opts.filterVersion;
+    versionRef.current = opts.filterVersion * 10 + (opts.mode === 'random' ? 1 : 0);
     queue.current = [];
   }, [opts.filterVersion, opts.mode]);
 

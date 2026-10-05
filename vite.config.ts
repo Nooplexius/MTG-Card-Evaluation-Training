@@ -48,6 +48,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        clientsClaim: true,
+        skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,woff2,svg,png,webmanifest}'],
         globIgnores: ['**/data/**'],
         navigateFallback: 'index.html',

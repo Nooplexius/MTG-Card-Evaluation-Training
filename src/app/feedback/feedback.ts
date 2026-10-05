@@ -53,6 +53,7 @@ export const FEEDBACK = {
 export type FeedbackEvent = keyof typeof FEEDBACK;
 
 const log: Array<{ ev: FeedbackEvent; at: number }> = [];
+let count = 0;
 
 /** Fires the sound and haptic for an action and returns its motion token. */
 export function feedback(ev: FeedbackEvent, opts: { level?: number } = {}): MotionToken {
@@ -66,7 +67,8 @@ export function feedback(ev: FeedbackEvent, opts: { level?: number } = {}): Moti
     }
   }
   log.push({ ev, at: performance.now() });
+  count++;
   if (log.length > 200) log.shift();
-  if (typeof window !== 'undefined') (window as unknown as { __loupeFeedback?: typeof log }).__loupeFeedback = log;
+  if (typeof window !== 'undefined') Object.assign(window, { __loupeFeedback: log, __loupeFeedbackCount: count });
   return spec.motion;
 }

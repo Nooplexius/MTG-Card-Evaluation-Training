@@ -181,6 +181,12 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
                     textMode={textMode}
                     label={label}
                     onVisible={onVisible}
+                    onError={() => {
+                      if (offline.offline && p.phase === 'grading') {
+                        feedback('card.skip');
+                        p.skip('image');
+                      }
+                    }}
                     onTap={() => {
                       feedback('card.zoom');
                       setZoom({ printing, view: p.phase === 'revealed' && view ? view : undefined });

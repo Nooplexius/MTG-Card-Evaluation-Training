@@ -18,11 +18,17 @@ const engine = new Engine(db(), fetchJson);
 const analytics = new Analytics(engine, db());
 const insights = new InsightService(engine, analytics, db());
 let ready: Promise<unknown> | null = null;
+let markInitialized: () => void = () => {};
+/** Resolves once init() has loaded the manifest; calls that need the pool wait for it. */
+const initialized = new Promise<void>((r) => (markInitialized = r));
+/** Planning waits for an offline switch in progress, so offline practice never picks an uncached card. */
+let offlinePending: Promise<unknown> = Promise.resolve();
 
 const api = {
   async init(base: string, firstSet?: string) {
     ready ??= engine.init(base);
     const manifest = await ready;
+    markInitialized();
     void engine.loadAll(firstSet);
     return manifest;
   },
@@ -34,7 +40,8 @@ const api = {
     await engine.loadAll();
     return engine.pool.entries.length;
   },
-  plan(req: PlanRequest) {
+  async plan(req: PlanRequest) {
+    await offlinePending;
     return engine.plan(req);
   },
   view(key: string) {
@@ -161,13 +168,19 @@ const api = {
       engine.offlineKeys = null;
       return { cards: null };
     }
-    await engine.loadAll();
-    const ids = await cachedImageIds();
-    engine.offlineKeys = new Set(engine.pool.entries.filter((e) => ids.has(e.card.p.id)).map((e) => e.key));
-    return { cards: engine.offlineKeys.size };
+    const job = (async () => {
+      await initialized;
+      await engine.loadAll();
+      const ids = await cachedImageIds();
+      engine.offlineKeys = new Set(engine.pool.entries.filter((e) => ids.has(e.card.p.id)).map((e) => e.key));
+      return engine.offlineKeys.size;
+    })();
+    offlinePending = job;
+    return { cards: await job };
   },
   /** Display-image URLs of cards likely to come up soon (unexposed or due) that aren't cached yet. */
   async prefetchUrls(n: number) {
+    await initialized;
     await engine.loadAll();
     const ids = await cachedImageIds();
     const cands = engine.candidates().filter((c) => !engine.isExposed(c.oracleId));
