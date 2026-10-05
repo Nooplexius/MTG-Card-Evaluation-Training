@@ -7,7 +7,7 @@ import { daysBetween, eligibility, type EligibilityRules } from './eligibility.t
 import type { OracleTag, ScryCard, ScrySet } from './inputs/scryfall.ts';
 import { cardDataPageUrl, exportLink, type FetchState } from './inputs/seventeen.ts';
 import { crossCheckStandard, scryfallStandardShare, standardSetCodes, type WisResponse } from './inputs/standard.ts';
-import { buildJoinIndex, joinRow, setMatchRate, type JoinIndex } from './join.ts';
+import { buildJoinIndex, joinRow, setMatchRates, type JoinIndex } from './join.ts';
 import { buildLimitedSet, standardToLimited, type LimitedSet, type SetsConfig } from './limitedSets.ts';
 import { buildSetFile, buildTagIndex, type JoinedRow } from './output.ts';
 import type { SeventeenData } from './types.ts';
@@ -75,13 +75,23 @@ interface Assigned {
   format: string;
 }
 
-function inferSet(d: SeventeenData, candidates: LimitedSet[], idx: JoinIndex, minRate: number): { set: string | null; detail: string } {
-  const rates = candidates.map((ls) => ({ code: ls.code, rate: setMatchRate(d.rows, ls, idx) })).sort((a, b) => b.rate - a.rate);
-  const winners = rates.filter((r) => r.rate >= minRate);
-  if (winners.length === 1) return { set: winners[0].code, detail: `${(winners[0].rate * 100).toFixed(1)}% of rows match ${winners[0].code}` };
-  if (winners.length > 1) return { set: null, detail: `matches several sets (${winners.map((w) => `${w.code} ${(w.rate * 100).toFixed(0)}%`).join(', ')})` };
+/** A set's own printings must match at least this share of an export's rows, and lead any other set by the margin. */
+const OWN_MIN = 0.5;
+const OWN_MARGIN = 0.3;
+
+/**
+ * The set an export belongs to. The whole join chain must match `minRate` of its rows, and the set's own printings
+ * must identify it: the Arena-anywhere step matches the same reprints for every set, so it can't tell sets apart.
+ */
+export function inferSet(d: Pick<SeventeenData, 'rows'>, candidates: LimitedSet[], idx: JoinIndex, minRate: number): { set: string | null; detail: string } {
+  const rates = candidates.map((ls) => ({ code: ls.code, ...setMatchRates(d.rows, ls, idx) })).sort((a, b) => b.own - a.own || b.all - a.all);
+  const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
   const best = rates[0];
-  return { set: null, detail: best ? `no set reaches ${(minRate * 100).toFixed(0)}% matching rows (best: ${best.code} ${(best.rate * 100).toFixed(1)}%)` : 'no candidate sets' };
+  if (!best) return { set: null, detail: 'no candidate sets' };
+  if (best.all < minRate || best.own < OWN_MIN) return { set: null, detail: `no set reaches ${(minRate * 100).toFixed(0)}% matching rows (best: ${best.code} ${pct(best.all)}, ${pct(best.own)} from its own printings)` };
+  const close = rates.filter((r) => r.all >= minRate && best.own - r.own < OWN_MARGIN);
+  if (close.length > 1) return { set: null, detail: `matches several sets (${close.map((r) => `${r.code} ${(r.own * 100).toFixed(0)}%`).join(', ')})` };
+  return { set: best.code, detail: `${pct(best.all)} of rows match ${best.code}${best.own < best.all ? ` (${pct(best.own)} from its own printings, the rest reprints in their original printings)` : ''}` };
 }
 
 function fmtDate(d: string): string {

@@ -24,7 +24,7 @@
     "ECL": { "arenaRelease": "2026-01-20" },
     "TMT": { "arenaRelease": "2026-03-03" },
     "SOS": { "arenaRelease": "2026-04-21" },
-    "MSH": { "arenaRelease": "2026-06-23" },
+    "MSH": { "arenaRelease": "2026-06-23", "extraBonus": ["mar"], "cardsCsv": ["MSH", "MAR"] },
     "HOB": { "arenaRelease": "2026-08-11" },
     "FRA": { "arenaRelease": "2026-09-29" }
   },

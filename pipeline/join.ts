@@ -166,8 +166,22 @@ export function joinRow(row: SeventeenRow, ls: LimitedSet, idx: JoinIndex, maxSt
 
 /** Share of rows matched by the set-specific steps (1 and 2); used to infer which set an export belongs to. */
 export function setMatchRate(rows: SeventeenRow[], ls: LimitedSet, idx: JoinIndex): number {
-  if (rows.length === 0) return 0;
-  let hit = 0;
-  for (const r of rows) if (joinRow(r, ls, idx, 2).ok) hit++;
-  return hit / rows.length;
+  return setMatchRates(rows, ls, idx).own;
+}
+
+/**
+ * Shares of rows matched by the set's own printings (steps 1 and 2) and by the whole join chain. They differ for sets
+ * whose boosters reprint older cards in their original printings, such as MKM's List slot on Arena.
+ */
+export function setMatchRates(rows: SeventeenRow[], ls: LimitedSet, idx: JoinIndex): { own: number; all: number } {
+  if (rows.length === 0) return { own: 0, all: 0 };
+  let own = 0;
+  let all = 0;
+  for (const r of rows) {
+    if (joinRow(r, ls, idx, 2).ok) {
+      own++;
+      all++;
+    } else if (joinRow(r, ls, idx, 3).ok) all++;
+  }
+  return { own: own / rows.length, all: all / rows.length };
 }
