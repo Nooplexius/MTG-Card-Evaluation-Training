@@ -86,13 +86,20 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
   const modeRef = useRef(opts.mode);
   modeRef.current = opts.mode;
   currentRef.current = current;
-  sessionRef.current = session;
 
   const persistSession = useCallback((s: Session) => {
     sessionRef.current = s;
     setSession(s);
     void e.call('saveSession', s);
   }, []);
+
+  /** The starter card can be graded before boot finishes, so the session is created on first need. */
+  const ensureSession = useCallback((): Session => {
+    if (sessionRef.current) return sessionRef.current;
+    const s = { ...newSessionRecord(modeRef.current, opts.drillId), current: currentRef.current?.key ?? null };
+    persistSession(s);
+    return s;
+  }, [opts.drillId]);
 
   const refill = useCallback(async () => {
     if (planning.current) return planning.current;
@@ -134,7 +141,8 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     (async () => {
       const open = opts.drillId ? null : await e.call('getOpenSession');
       if (cancelled) return;
-      if (open && open.current && (!starter || open.done > 0) && open.mode === modeRef.current) {
+      const startedHere = sessionRef.current !== null && !opts.drillId;
+      if (!startedHere && open && open.current && (!starter || open.done > 0) && open.mode === modeRef.current) {
         sessionRef.current = open;
         setSession(open);
         const v = await e.call('viewWhenReady', open.current);
@@ -145,9 +153,8 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
           return;
         }
       }
-      const ses = newSessionRecord(modeRef.current, opts.drillId);
       if (current && current.reason === 'starter' && !opts.drillId) {
-        persistSession({ ...ses, current: current.key });
+        ensureSession();
         const v = await e.call('viewWhenReady', current.key);
         if (cancelled) return;
         const total = manifest.sets.reduce((n, s) => n + s.cards, 0);
@@ -155,7 +162,8 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
         void refill();
         return;
       }
-      persistSession(ses);
+      sessionRef.current = null;
+      persistSession(newSessionRecord(modeRef.current, opts.drillId));
       await refill();
       if (cancelled) return;
       const first = queue.current.shift();
@@ -194,6 +202,8 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     setToday(todayRef.current);
     setReveal({ user: g, contrasts: null, firstLook: null, goalReached, drillMastered: false });
     setPhase('revealed');
+    const sesAtCommit = ensureSession();
+    persistSession({ ...sesAtCommit, done: sesAtCommit.done + 1 });
     if (goalReached) setTimeout(() => feedback('milestone'), 420);
     let view = cur.view;
     if (!view) {
@@ -209,7 +219,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
       setTimeout(() => feedback(ev, { level: correct ? Math.min(next, 10) : 0 }), 90);
       return next;
     });
-    const ses = sessionRef.current;
+    const ses = sesAtCommit;
     const evaluation: Evaluation = {
       ts: now,
       key: view.key,
@@ -249,8 +259,8 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     }
     const saved = await e.call('saveEvaluation', evaluation, snapshotOf(view));
     setReveal((r) => (r ? { ...r, firstLook: saved.firstLook, drillMastered: Boolean(saved.drill?.mastered) } : r));
-    const s2 = sessionRef.current ?? ses;
-    if (s2) persistSession({ ...s2, done: s2.done + 1, length: saved.drill?.finished ? s2.done + 1 : s2.length });
+    const s2 = sessionRef.current;
+    if (s2 && saved.drill?.finished && s2.length !== s2.done) persistSession({ ...s2, length: s2.done });
     const avoid = [view.key, ...queue.current.map((q) => q.view.key)];
     const contrasts = await e.call('contrasts', view.key, 3, avoid);
     setReveal((r) => (r && r.user === g ? { ...r, contrasts } : r));

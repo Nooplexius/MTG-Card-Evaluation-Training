@@ -12,6 +12,16 @@ import { gradeLabel } from './GradePad.tsx';
 import { GradeChip, diffWords } from './RevealPanel.tsx';
 import { Zoom, type ZoomTarget } from './Zoom.tsx';
 
+/** The three biggest misses, one per card (a missed card often returns later in the same session). */
+function worstByCard(es: Evaluation[]): Evaluation[] {
+  const byKey = new Map<string, Evaluation>();
+  for (const e of es) {
+    const cur = byKey.get(e.key);
+    if (!cur || Math.abs(e.user - e.actual) > Math.abs(cur.user - cur.actual)) byKey.set(e.key, e);
+  }
+  return [...byKey.values()].sort((a, b) => Math.abs(b.user - b.actual) - Math.abs(a.user - a.actual)).slice(0, 3);
+}
+
 export interface SummaryExtras {
   recentMae: number | null;
   drill: { facetId: string; label: string; query: string; headline: string } | null;
@@ -42,7 +52,7 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
           }
           setBest({ rate, isNew });
         }
-        const worst = [...es].sort((a, b) => Math.abs(b.user - b.actual) - Math.abs(a.user - a.actual)).slice(0, 3);
+        const worst = worstByCard(es);
         const vs: Record<string, CardView | null> = {};
         for (const w of worst) vs[w.key] = await engine().call('view', w.key);
         setViews(vs);
@@ -61,7 +71,7 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
   const within = n > 0 ? errs.filter((x) => Math.abs(x) <= 1).length / n : 0;
   const exact = n > 0 ? errs.filter((x) => x === 0).length / n : 0;
   const mae = n > 0 ? errs.reduce((s, x) => s + Math.abs(x), 0) / n : 0;
-  const worst = [...(evals ?? [])].sort((a, b) => Math.abs(b.user - b.actual) - Math.abs(a.user - a.actual)).slice(0, 3);
+  const worst = worstByCard(evals ?? []);
   const enter = (i: number) => (reduced ? { initial: { opacity: 0 }, animate: { opacity: 1 } } : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.06 * i, duration: 0.24 } });
   const delta = extras?.recentMae !== null && extras?.recentMae !== undefined && n > 0 ? mae - extras.recentMae : null;
 

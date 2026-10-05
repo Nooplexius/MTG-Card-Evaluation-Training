@@ -146,7 +146,9 @@ export function StatsScreen() {
         <>
           <section aria-busy={loading}>
             <h2 className="section-title smallcaps">Headline</h2>
-            <p className="field__note">First looks here are uniformly sampled first looks only (Random mode and Adaptive probes), so they measure skill rather than the scheduler's mix.</p>
+            <p className="field__note">
+              The first-look column uses only uniformly sampled first looks ({res.headFirst.n} of your {res.headFirstAll.n} first looks: Random mode and Adaptive probes), so it measures skill rather than the scheduler's mix.
+            </p>
             <HeadTable first={res.headFirst} review={res.headReview} />
             <p className="field__note">
               {res.streaks.correctNow} correct in a row (best {res.streaks.correctBest}) · {res.streaks.days} day{res.streaks.days === 1 ? '' : 's'} in a row · {res.streaks.today} today
