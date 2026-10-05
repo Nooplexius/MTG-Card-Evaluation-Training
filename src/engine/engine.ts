@@ -74,6 +74,12 @@ export class Engine {
 
   /** Sets the practice filter; on an error or a missing connection the last valid pool stays active. */
   async setPracticeQuery(q: string, onProgress?: (p: QueryProgress) => void): Promise<QueryOutcome> {
+    if (q.trim() === '') {
+      this.practiceQuery = '';
+      this.filterKeys = null;
+      const count = (this.manifest?.sets ?? []).reduce((n, s) => n + s.cards, 0);
+      return { query: '', matches: null, count, error: null, warnings: [], needsConnection: false, rateLimited: false, usedApi: false };
+    }
     const { keys, ...rest } = await this.queryPool(q, onProgress);
     if (keys && !rest.error) {
       this.practiceQuery = rest.query;

@@ -1,14 +1,15 @@
-import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
+import { LazyMotion, MotionConfig } from 'motion/react';
 import { lazy, Suspense, useEffect } from 'react';
 import { AppProvider, useApp } from './AppContext.tsx';
 import { endDrill, useDrill } from './drillStore.ts';
-import { FilterScreen } from './filter/FilterScreen.tsx';
 import { applyPracticeQuery, filterLabel, usePracticeFilter } from './filter/practiceFilter.ts';
-import { MenuScreen } from './MenuScreen.tsx';
 import { PracticeScreen } from './practice/PracticeScreen.tsx';
 import { useRoute } from './router.ts';
 import { getSettings, useReducedMotion } from './settings.ts';
 
+const loadMotion = () => import('./motionFeatures.ts').then((m) => m.default);
+const MenuScreen = lazy(() => import('./MenuScreen.tsx').then((m) => ({ default: m.MenuScreen })));
+const FilterScreen = lazy(() => import('./filter/FilterScreen.tsx').then((m) => ({ default: m.FilterScreen })));
 const AboutScreen = lazy(() => import('./screens/AboutScreen.tsx').then((m) => ({ default: m.AboutScreen })));
 const DataScreen = lazy(() => import('./screens/DataScreen.tsx').then((m) => ({ default: m.DataScreen })));
 const SettingsScreen = lazy(() => import('./screens/SettingsScreen.tsx').then((m) => ({ default: m.SettingsScreen })));
@@ -60,7 +61,7 @@ function Shell() {
 export function App() {
   const reduced = useReducedMotion();
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={loadMotion} strict>
       <MotionConfig reducedMotion={reduced ? 'always' : 'never'}>
         <AppProvider>
           <Shell />

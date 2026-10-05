@@ -3,9 +3,10 @@ import { expect, type Page } from '@playwright/test';
 /** Grade key names as shown (minus is U+2212). */
 export const GRADES = ['F', 'D−', 'D', 'D+', 'C−', 'C', 'C+', 'B−', 'B', 'B+', 'A−', 'A', 'A+'];
 
-/** Waits until a card is on screen with its image decoded. */
+/** Waits until the app (not the static first screen) shows a card with its image decoded. */
 export async function cardReady(page: Page): Promise<void> {
   await expect(page.locator('.card-box.is-loaded .card-box__img')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.shell')).toHaveCount(0, { timeout: 15_000 });
 }
 
 /** Grades the current card and waits for the reveal. */

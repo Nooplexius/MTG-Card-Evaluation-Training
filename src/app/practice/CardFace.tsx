@@ -7,6 +7,13 @@ export function cardImageUrl(p: Pick<Printing, 'id' | 'image_version'>, back = f
 }
 
 const preloaded = new Map<string, Promise<void>>();
+const decoded = new Set<string>();
+
+/** Images already decoded (preloaded cards, or the starter painted by the static first screen) show without a fade. */
+export function isDecoded(url: string): boolean {
+  if (decoded.has(url)) return true;
+  return window.__LOUPE_STARTER__?.url === url && typeof window.__LOUPE_STARTER_LOADED__ === 'number';
+}
 
 /** Fetches and decodes an image so it can appear in the next frame. */
 export function preloadImage(url: string): Promise<void> {
@@ -19,7 +26,10 @@ export function preloadImage(url: string): Promise<void> {
       img.src = url;
       img
         .decode()
-        .then(() => resolve())
+        .then(() => {
+          decoded.add(url);
+          resolve();
+        })
         .catch(() => (img.complete && img.naturalWidth > 0 ? resolve() : reject(new Error('image failed'))));
     });
     preloaded.set(url, p);
@@ -71,16 +81,17 @@ export interface CardFaceProps {
 /** The card image in a box reserved at 63:88; never covered or distorted. */
 export function CardFace({ printing, back = false, textMode = false, onVisible, onError, onTap, label }: CardFaceProps) {
   const url = cardImageUrl(printing, back && hasFaceImages(printing as Printing));
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(() => isDecoded(url));
   const [failed, setFailed] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const describedBy = `card-desc-${printing.id}`;
 
   useEffect(() => {
-    setLoaded(false);
+    setLoaded(isDecoded(url));
     setFailed(false);
     const img = imgRef.current;
     if (img && img.complete && img.naturalWidth > 0) {
+      decoded.add(url);
       setLoaded(true);
       onVisible?.();
     }
@@ -108,6 +119,7 @@ export function CardFace({ printing, back = false, textMode = false, onVisible, 
               fetchPriority="high"
               draggable={false}
               onLoad={() => {
+                decoded.add(url);
                 setLoaded(true);
                 onVisible?.();
               }}

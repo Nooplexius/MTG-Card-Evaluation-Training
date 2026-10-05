@@ -141,9 +141,18 @@ test('warm repeat visit shows the first card within 1 s with the service worker'
 
 test('initial JavaScript is about 200 KB gzipped or less (data excluded)', async () => {
   const html = readFileSync(join(DIST, 'index.html'), 'utf8');
-  const scripts = [...html.matchAll(/(?:src|href)="\/?(assets\/[^"]+\.js)"/g)].map((m) => m[1]);
+  const entries = [...html.matchAll(/["']\/?(assets\/[^"']+\.js)["']/g)].map((m) => m[1]);
   const worker = readdirSync(join(DIST, 'assets')).filter((f) => f.startsWith('engine.worker') && f.endsWith('.js')).map((f) => `assets/${f}`);
-  const files = [...new Set([...scripts, ...worker])];
+  const seen = new Set<string>();
+  const visit = (f: string) => {
+    if (seen.has(f)) return;
+    seen.add(f);
+    const src = readFileSync(join(DIST, f), 'utf8');
+    for (const m of src.matchAll(/\bimport\s*(?:[\w$*{}\s,]+from\s*)?["']\.\/([^"']+\.js)["']/g)) visit(`assets/${m[1]}`);
+  };
+  for (const f of [...entries, ...worker]) visit(f);
+  const files = [...seen];
+  expect(entries.some((f) => f.startsWith('assets/index-'))).toBe(true);
   const sizes = files.map((f) => ({ f, gz: gzipSync(readFileSync(join(DIST, f))).length }));
   const total = sizes.reduce((s, x) => s + x.gz, 0);
   console.log(`initial JS: ${sizes.map((s) => `${s.f} ${(s.gz / 1024).toFixed(1)} KB`).join(', ')} = ${(total / 1024).toFixed(1)} KB gzipped`);

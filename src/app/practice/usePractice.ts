@@ -72,7 +72,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
   const [phase, setPhase] = useState<Phase>(starter ? 'grading' : 'boot');
   const [current, setCurrent] = useState<Current | null>(() =>
     starter
-      ? { key: `${starter.card.set}:${starter.card.o}`, view: null, image: { id: starter.card.id, image_version: starter.card.v, name: starter.card.name }, reason: 'starter', prob: 0, uniform: true, shownAt: Date.now(), visibleAt: null }
+      ? { key: `${starter.card.set}:${starter.card.o}`, view: null, image: { id: starter.card.id, image_version: starter.card.v, name: starter.card.name }, reason: 'starter', prob: 0, uniform: true, shownAt: Date.now(), visibleAt: window.__LOUPE_STARTER_LOADED__ ?? null }
       : null,
   );
   const [reveal, setReveal] = useState<RevealState | null>(null);
@@ -198,10 +198,10 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     setCurrent((c) => (c && c.visibleAt === null ? { ...c, visibleAt: Math.max(Date.now(), c.shownAt + DEAL_MS) } : c));
   }, []);
 
-  const commit = useCallback(async (g: number) => {
+  const commit = useCallback(async (g: number, at?: number) => {
     const cur = currentRef.current;
     if (!cur) return;
-    const now = Date.now();
+    const now = at ?? Date.now();
     const rtMs = Math.max(0, now - (cur.visibleAt ?? cur.shownAt + DEAL_MS));
     todayRef.current += 1;
     const goal = getSettings().dailyGoal;
@@ -273,6 +273,13 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     setReveal((r) => (r && r.user === g ? { ...r, contrasts } : r));
     void e.call('expose', contrasts.map((c) => c.card.o), 'contrast');
     void refill();
+  }, []);
+
+  useEffect(() => {
+    const early = window.__LOUPE_EARLY_GRADE__;
+    if (!early || !starter) return;
+    window.__LOUPE_EARLY_GRADE__ = null;
+    void commit(early.g, early.at);
   }, []);
 
   const advance = useCallback(async () => {

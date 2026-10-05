@@ -29,7 +29,8 @@ const api = {
     ready ??= engine.init(base);
     const manifest = await ready;
     markInitialized();
-    void engine.loadAll(firstSet);
+    if (firstSet) void engine.loadSet(firstSet).then(() => setTimeout(() => void engine.loadAll(), 1200));
+    else void engine.loadAll();
     return manifest;
   },
   async ensureSet(code: string) {

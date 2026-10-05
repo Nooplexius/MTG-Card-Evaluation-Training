@@ -172,7 +172,7 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
                 <m.div
                   key={cur?.key}
                   className="card-deal"
-                  initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
+                  initial={cur?.reason === 'starter' || cur?.reason === 'resume' ? false : reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: (reduced ? 120 : DEAL_MS) / 1000, ease: [0.2, 0.8, 0.2, 1] }}
                 >

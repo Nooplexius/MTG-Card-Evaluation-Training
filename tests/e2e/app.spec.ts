@@ -48,6 +48,24 @@ test('a full session, a query filter, stats and insights, and progress that surv
   await expect(page.locator('.credit__count')).not.toHaveText('1 / 20');
 });
 
+test('a grade tapped on the static first screen before the app loads is kept', async ({ page }) => {
+  let release: () => void = () => {};
+  const gate = new Promise<void>((r) => (release = r));
+  await page.route(/\/assets\/index-[\w-]+\.js$/, async (route) => {
+    await gate;
+    await route.continue();
+  });
+  await page.goto('/');
+  await expect(page.locator('.shell .card-box__img')).toBeVisible();
+  await page.locator('.shell .pad button[aria-label="B"]').click();
+  await expect(page.locator('.shell .key.is-pressed')).toHaveCount(1);
+  release();
+  await expect(page.locator('button.next')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.shell')).toHaveCount(0);
+  await page.goto('/#/history');
+  await expect(page.locator('.hist-row')).toHaveCount(1);
+});
+
 test('practice keeps working offline from cached cards', async ({ page, context }) => {
   await page.goto('/');
   await page.waitForFunction(() => navigator.serviceWorker?.controller != null, undefined, { timeout: 30_000 });

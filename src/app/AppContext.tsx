@@ -26,16 +26,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     manifest: null,
     error: null,
     progress: { loaded: 0, total: 0, cards: 0 },
-    starter: (window as unknown as { __LOUPE_STARTER__?: StarterInfo | null }).__LOUPE_STARTER__ ?? null,
+    starter: window.__LOUPE_STARTER__ ?? null,
   }));
 
   useEffect(() => {
     const e = engine();
     const off = e.on('progress', (p) => setState((s) => ({ ...s, progress: p as AppState['progress'] })));
-    e.call('init', baseUrl(), state.starter?.card.set)
-      .then((m) => setState((s) => ({ ...s, manifest: m as Manifest, progress: { ...s.progress, total: (m as Manifest).sets.length } })))
-      .catch((err: Error) => setState((s) => ({ ...s, error: err.message })));
-    void e.call('persist');
+    const start = () => {
+      e.call('init', baseUrl(), state.starter?.card.set)
+        .then((m) => setState((s) => ({ ...s, manifest: m as Manifest, progress: { ...s.progress, total: (m as Manifest).sets.length } })))
+        .catch((err: Error) => setState((s) => ({ ...s, error: err.message })));
+      void e.call('persist');
+    };
+    if (state.starter) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = state.starter.url;
+      let started = false;
+      const go = () => {
+        if (started) return;
+        started = true;
+        setTimeout(start, 150);
+      };
+      img.decode().then(go, go);
+      setTimeout(go, 2500);
+    } else start();
     return () => {
       off();
     };
