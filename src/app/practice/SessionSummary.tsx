@@ -4,12 +4,24 @@ import { displayName } from '../../lib/card.ts';
 import type { Evaluation, Session } from '../../lib/types.ts';
 import type { CardView } from '../../lib/view.ts';
 import { engine } from '../engineClient.ts';
+import { feedback } from '../feedback/feedback.ts';
 import { go } from '../router.ts';
-import { useReducedMotion } from '../settings.ts';
-import { Tap } from '../ui/Tap.tsx';
+import { getSettings, setSettings, useReducedMotion } from '../settings.ts';
+import { canPromptInstall, isIosBrowser, promptInstall } from '../install.ts';
+import { Tap, TapLink } from '../ui/Tap.tsx';
 import { gradeLabel } from './GradePad.tsx';
 import { GradeChip, diffWords } from './RevealPanel.tsx';
 import { Zoom, type ZoomTarget } from './Zoom.tsx';
+
+/** The three biggest misses, one per card (a missed card often returns later in the same session). */
+function worstByCard(es: Evaluation[]): Evaluation[] {
+  const byKey = new Map<string, Evaluation>();
+  for (const e of es) {
+    const cur = byKey.get(e.key);
+    if (!cur || Math.abs(e.user - e.actual) > Math.abs(cur.user - cur.actual)) byKey.set(e.key, e);
+  }
+  return [...byKey.values()].sort((a, b) => Math.abs(b.user - b.actual) - Math.abs(a.user - a.actual)).slice(0, 3);
+}
 
 export interface SummaryExtras {
   recentMae: number | null;
@@ -22,17 +34,38 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
   const [views, setViews] = useState<Record<string, CardView | null>>({});
   const [extras, setExtras] = useState<SummaryExtras | null>(null);
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
+  const [best, setBest] = useState<{ rate: number; isNew: boolean } | null>(null);
+  const [streak, setStreak] = useState<{ days: number; today: number } | null>(null);
+  const [total, setTotal] = useState(0);
+  const [installShown, setInstallShown] = useState(false);
 
   useEffect(() => {
     void engine()
       .call('sessionEvaluations', session.id)
       .then(async (es) => {
         setEvals(es);
-        const worst = [...es].sort((a, b) => Math.abs(b.user - b.actual) - Math.abs(a.user - a.actual)).slice(0, 3);
+        const firsts = es.filter((e) => e.firstLook);
+        if (firsts.length >= 8) {
+          const rate = firsts.filter((e) => Math.abs(e.user - e.actual) <= 1).length / firsts.length;
+          const prev = getSettings().bestFirstLook;
+          const isNew = rate > prev;
+          if (isNew) {
+            setSettings({ bestFirstLook: rate });
+            setTimeout(() => feedback('milestone'), 500);
+          }
+          setBest({ rate, isNew });
+        }
+        const worst = worstByCard(es);
         const vs: Record<string, CardView | null> = {};
         for (const w of worst) vs[w.key] = await engine().call('view', w.key);
         setViews(vs);
       });
+    void engine()
+      .call('evaluationCount')
+      .then(setTotal);
+    void engine()
+      .call('streakInfo')
+      .then((s) => setStreak({ days: s.days, today: s.today }));
     void engine()
       .call('summaryExtras', session.id)
       .then((x) => setExtras(x as SummaryExtras))
@@ -44,7 +77,7 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
   const within = n > 0 ? errs.filter((x) => Math.abs(x) <= 1).length / n : 0;
   const exact = n > 0 ? errs.filter((x) => x === 0).length / n : 0;
   const mae = n > 0 ? errs.reduce((s, x) => s + Math.abs(x), 0) / n : 0;
-  const worst = [...(evals ?? [])].sort((a, b) => Math.abs(b.user - b.actual) - Math.abs(a.user - a.actual)).slice(0, 3);
+  const worst = worstByCard(evals ?? []);
   const enter = (i: number) => (reduced ? { initial: { opacity: 0 }, animate: { opacity: 1 } } : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.06 * i, duration: 0.24 } });
   const delta = extras?.recentMae !== null && extras?.recentMae !== undefined && n > 0 ? mae - extras.recentMae : null;
 
@@ -68,6 +101,12 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
           <span className="big-stat__label">mean error (steps)</span>
         </div>
       </m.section>
+      {(best || streak) && (
+        <m.p className="summary__meta" {...enter(1)}>
+          {best ? (best.isNew ? `New personal best: ${Math.round(best.rate * 100)}% of first looks within one step. ` : `First looks within one step: ${Math.round(best.rate * 100)}% (best ${Math.round(getSettings().bestFirstLook * 100)}%). `) : ''}
+          {streak ? `${streak.today} of ${getSettings().dailyGoal} cards today · ${streak.days}-day streak` : ''}
+        </m.p>
+      )}
       {delta !== null && (
         <m.p className={`summary__delta ${delta <= 0 ? 'is-better' : 'is-worse'}`} {...enter(1)}>
           {delta <= 0 ? `${Math.abs(delta).toFixed(2)} steps closer than your recent sessions` : `${delta.toFixed(2)} steps further off than your recent sessions`}
@@ -105,6 +144,38 @@ export function SessionSummary({ session, onNew, drillLabel, onEndDrill }: { ses
             Drill this
           </Tap>
         </m.section>
+      )}
+      {!getSettings().installPromptShown && !installShown && (isIosBrowser() || canPromptInstall()) && (
+        <m.section className="summary__drill" {...enter(4)}>
+          <h2 className="section-title smallcaps">Keep your progress safe</h2>
+          {isIosBrowser() ? (
+            <p>Safari can delete a site's data after a week without a visit. Add Loupe to your Home Screen: tap Share, then “Add to Home Screen”.</p>
+          ) : (
+            <p>Install Loupe as an app so your progress stays put and it opens offline.</p>
+          )}
+          <div className="row-actions">
+            {canPromptInstall() && (
+              <Tap fb="action.primary" className="btn btn--primary" onTap={() => void promptInstall().then(() => setInstallShown(true))}>
+                Install
+              </Tap>
+            )}
+            <Tap
+              fb="action.secondary"
+              className="btn"
+              onTap={() => {
+                setSettings({ installPromptShown: true });
+                setInstallShown(true);
+              }}
+            >
+              Not now
+            </Tap>
+          </div>
+        </m.section>
+      )}
+      {total >= 100 && Date.now() - getSettings().lastBackupAt > 14 * 86_400_000 && (
+        <m.p className="summary__meta" {...enter(5)}>
+          You have {total} evaluations on this device. <TapLink href="#/settings" fb="nav.open">Export a backup</TapLink> now and then.
+        </m.p>
       )}
       <div className="summary__actions">
         {drillLabel ? (

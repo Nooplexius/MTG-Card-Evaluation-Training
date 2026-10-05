@@ -1,0 +1,26 @@
+name: Scryfall drift check
+
+# Weekly: replays the recorded differential corpus against live Scryfall (one request at a time, 750 ms apart) and
+# reports queries whose results changed or where the local engine now disagrees. Separate from deploys, so a
+# failure here never blocks one; re-record with `npm run corpus:record` when Scryfall's behavior has changed.
+
+on:
+  schedule:
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run corpus:drift -- --strict

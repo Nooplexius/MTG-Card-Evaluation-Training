@@ -77,3 +77,9 @@
 
   color-scheme: dark;
 }
+
+/* The pre-JavaScript first screen uses local fonts so no font download competes with the starter card. */
+.shell {
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-ui: 'Trebuchet MS', 'Gill Sans', sans-serif;
+}

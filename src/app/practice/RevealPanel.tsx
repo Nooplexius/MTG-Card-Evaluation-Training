@@ -90,9 +90,10 @@ export interface RevealProps {
   onContrast: (v: CardView) => void;
   nextLabel: string;
   streak: number;
+  notes?: string[];
 }
 
-export function RevealPanel({ view, user, contrasts, reduced, onNext, onContrast, nextLabel, streak }: RevealProps) {
+export function RevealPanel({ view, user, contrasts, reduced, onNext, onContrast, nextLabel, streak, notes = [] }: RevealProps) {
   const actual = view.card.g;
   const err = user - actual;
   const d = diffWords(err);
@@ -126,6 +127,11 @@ export function RevealPanel({ view, user, contrasts, reduced, onNext, onContrast
           </m.div>
         </div>
         <GradeStrip user={user} actual={actual} reduced={reduced} uncertainty={noisy ? view.seSteps : 0} />
+        {notes.map((n) => (
+          <m.p key={n} className="reveal__note" {...enter(0.3)}>
+            {n}
+          </m.p>
+        ))}
         <m.div className="reveal__numbers num" {...enter(0.04)}>
           <span>
             GIH WR{' '}

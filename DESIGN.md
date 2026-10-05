@@ -73,6 +73,7 @@ A 5 × 3 key bed, not the default 4 × 3 + F:
 - During the reveal the card shrinks toward the top and the reveal panel replaces the key bed. Nothing is ever drawn on top of the card image: grades, tints and glows sit around it.
 - Wide screens (≥ 900 px): card on the left, pad or reveal on the right, keyboard hints visible.
 - Every other screen (filter, stats, insights, history, settings, about) is a full-screen view that replaces practice.
+- Compare mode mirrors a two-card draft pick: the question and both cards sit centered as one group, each card over an info block of fixed height (name before the pick; grade, GIH WR, games and ALSA after), so nothing moves at the reveal. The two pick buttons sit in the thumb zone under their cards. The winner gets a brass ring around its card box, never on the image; a tap on a card opens it full size.
 
 ## Motion
 

@@ -4,6 +4,8 @@ import { displayName, hasFaceImages, type Printing } from '../../lib/card.ts';
 import type { Mode } from '../../lib/types.ts';
 import type { CardView } from '../../lib/view.ts';
 import { useApp } from '../AppContext.tsx';
+import { useLoadProgress } from '../loadProgress.ts';
+import { useOffline } from '../offline.ts';
 import { feedback } from '../feedback/feedback.ts';
 import { go } from '../router.ts';
 import { setSettings, useReducedMotion, useSettings } from '../settings.ts';
@@ -49,9 +51,16 @@ function useFlip(ref: React.RefObject<HTMLElement | null>, dep: unknown, reduced
   }, []);
 }
 
+/** Share of set files loaded, while loading; subscribes on its own so progress never re-renders the practice screen. */
+function LoadPercent({ show }: { show: boolean }) {
+  const progress = useLoadProgress();
+  return show && progress.total > 0 && progress.loaded < progress.total ? <span className="credit__load num">{Math.round((100 * progress.loaded) / progress.total)}%</span> : <span className="credit__load" />;
+}
+
 export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill, onEndDrill }: PracticeProps) {
-  const { manifest, starter, progress } = useApp();
+  const { manifest, starter } = useApp();
   const settings = useSettings();
+  const offline = useOffline();
   const reduced = useReducedMotion();
   const mode: Mode = drill ? 'drill' : settings.mode;
   const p = usePractice(manifest, starter, { mode, drillKeys: drill?.keys, drillId: drill?.id, filterVersion });
@@ -122,8 +131,9 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
         <Tap fb="nav.open" className="icon-btn" onTap={() => go('menu')} aria-label="Menu">
           <Icon name="menu" />
         </Tap>
-        <Tap fb="nav.open" className="filter-chip" onTap={() => go('filter')} aria-label={`Practice filter: ${filterLabel}. Change`}>
+        <Tap fb="nav.open" className="filter-chip" onTap={() => go('filter')}>
           <Icon name="filter" size={18} />
+          <span className="sr-only">Practice filter: </span>
           <span className="filter-chip__text">{drill ? `Drill · ${drill.label}` : filterLabel}</span>
           {filterCount !== null && <span className="filter-chip__count num">{filterCount.toLocaleString('en-US')}</span>}
         </Tap>
@@ -137,7 +147,7 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
             fb={settings.mode === 'random' ? 'toggle.off' : 'toggle.on'}
             className="mode-btn"
             onTap={() => setSettings({ mode: settings.mode === 'random' ? 'adaptive' : 'random' })}
-            aria-label={`Mode: ${settings.mode === 'random' ? 'Random' : 'Adaptive'}. Switch`}
+            aria-label={`${settings.mode === 'random' ? 'Random' : 'Adaptive'} mode, tap to switch`}
           >
             <Icon name={settings.mode === 'random' ? 'shuffle' : 'target'} size={18} />
             <span>{settings.mode === 'random' ? 'Random' : 'Adaptive'}</span>
@@ -148,7 +158,9 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
         <span className="credit__count num" aria-label="Session progress">
           {sessionText}
         </span>
-        {manifest?.synthetic ? (
+        {offline.offline ? (
+          <span className="credit__link credit__link--warn">Offline · practicing with {offline.cards ?? 0} cached cards</span>
+        ) : manifest?.synthetic ? (
           <TapLink className="credit__link credit__link--warn" href="#/data" fb="nav.open">
             Sample data: invented numbers, not 17Lands
           </TapLink>
@@ -157,7 +169,7 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
             Win-rate data from 17Lands Card Data{setMeta ? ` · ${setMeta.code} ${setMeta.formatLabel}` : ''}
           </TapLink>
         )}
-        {p.session && progress.total > 0 && progress.loaded < progress.total ? <span className="credit__load num">{Math.round((100 * progress.loaded) / progress.total)}%</span> : <span className="credit__load" />}
+        <LoadPercent show={p.session !== null} />
       </div>
       <main className="stage">
         <div className="card-slot">
@@ -167,7 +179,7 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
                 <m.div
                   key={cur?.key}
                   className="card-deal"
-                  initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
+                  initial={cur?.reason === 'starter' || cur?.reason === 'resume' ? false : reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: (reduced ? 120 : DEAL_MS) / 1000, ease: [0.2, 0.8, 0.2, 1] }}
                 >
@@ -177,6 +189,12 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
                     textMode={textMode}
                     label={label}
                     onVisible={onVisible}
+                    onError={() => {
+                      if (offline.offline && p.phase === 'grading') {
+                        feedback('card.skip');
+                        p.skip('image');
+                      }
+                    }}
                     onTap={() => {
                       feedback('card.zoom');
                       setZoom({ printing, view: p.phase === 'revealed' && view ? view : undefined });
@@ -212,6 +230,7 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
             streak={p.streak}
             onNext={p.next}
             onContrast={(c) => setZoom({ printing: c.card.p, view: c })}
+            notes={[...(p.reveal.goalReached ? [`Daily goal reached: ${p.today} cards today`] : []), ...(p.reveal.drillMastered ? ['Drill mastered: the last 8 cards were on target'] : [])]}
             nextLabel={p.session && p.session.length > 0 && p.session.done >= p.session.length ? 'See session summary' : 'Next card'}
           />
         ) : p.phase === 'revealed' ? (

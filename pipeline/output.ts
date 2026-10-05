@@ -19,7 +19,7 @@ function imageVersion(c: ScryCard): string | undefined {
 
 function toFace(f: Record<string, unknown>): Face {
   const out: Face = { name: f.name as string };
-  const keys: Array<keyof Face> = ['printed_name', 'mana_cost', 'type_line', 'printed_type_line', 'oracle_text', 'printed_text', 'flavor_text', 'power', 'toughness', 'loyalty', 'defense', 'artist', 'watermark', 'layout'];
+  const keys: Array<keyof Face> = ['printed_name', 'flavor_name', 'mana_cost', 'type_line', 'printed_type_line', 'oracle_text', 'printed_text', 'flavor_text', 'power', 'toughness', 'loyalty', 'defense', 'artist', 'watermark', 'layout'];
   for (const k of keys) {
     const v = str(f[k]);
     if (v !== undefined) (out as unknown as Record<string, unknown>)[k] = v;
@@ -71,7 +71,7 @@ export function toPrinting(c: ScryCard, setName: string): Printing {
     booster: Boolean(c.booster),
     story_spotlight: Boolean(c.story_spotlight),
   };
-  const optStr: Array<keyof Printing> = ['printed_name', 'mana_cost', 'printed_type_line', 'oracle_text', 'printed_text', 'flavor_text', 'power', 'toughness', 'loyalty', 'defense', 'artist', 'security_stamp', 'watermark', 'image_status'];
+  const optStr: Array<keyof Printing> = ['printed_name', 'flavor_name', 'mana_cost', 'printed_type_line', 'oracle_text', 'printed_text', 'flavor_text', 'power', 'toughness', 'loyalty', 'defense', 'artist', 'security_stamp', 'watermark', 'image_status'];
   for (const k of optStr) {
     const v = str(c[k]);
     if (v !== undefined) (p as unknown as Record<string, unknown>)[k] = v;

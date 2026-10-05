@@ -1,0 +1,132 @@
+name: Data and deploy
+
+# Once a day (and on demand): fetch 17Lands data for active sets (at most one request per endpoint and set per UTC
+# day, one at a time, stopping for the day on any error; switch: autoFetch17Lands in data/config/pipeline.json),
+# keep the snapshots on the `data` branch, rebuild, and publish to GitHub Pages when the data is real and changed.
+# Pushes that change exports, config or the app rebuild from the stored snapshots without the daily fetch.
+#
+# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
+
+on:
+  schedule:
+    - cron: '23 10 * * *'
+  workflow_dispatch:
+    inputs:
+      fetch:
+        description: Run today's 17Lands fetch (skipped automatically if it already ran today)
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - 'data/17lands/**'
+      - 'data/config/**'
+      - 'pipeline/**'
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'package-lock.json'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: data-and-deploy
+  cancel-in-progress: false
+
+jobs:
+  data:
+    name: Build data and site
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: UTC date
+        id: day
+        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Shared inputs cache (Scryfall bulk data, Standard list, 17Lands cards.csv)
+        uses: actions/cache@v6
+        with:
+          path: .cache
+          key: inputs-${{ steps.day.outputs.today }}
+          restore-keys: inputs-
+      - name: Check out the data branch
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          url="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads origin data > /dev/null; then
+            git clone --quiet --depth 1 --branch data "$url" data-branch
+          else
+            git init --quiet -b data data-branch
+            git -C data-branch remote add origin "$url"
+          fi
+      - name: Build data
+        env:
+          FETCH_INPUT: ${{ inputs.fetch }}
+        run: |
+          fetch=""
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] || { [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$FETCH_INPUT" = "true" ]; }; then
+            fetch="--fetch"
+          fi
+          npx tsx pipeline/cli.ts build $fetch --data-branch data-branch
+      - name: Save fetched snapshots to the data branch
+        run: |
+          cd data-branch
+          if [ ! -f README.md ]; then
+            printf '%s\n' '# Loupe data branch' '' \
+              'Written by the "Data and deploy" workflow: fetch-state.json (one 17Lands request per endpoint and set per UTC day),' \
+              'filters/latest.json (the active-set list) and snapshots/SET/FORMAT/DATE.json (daily card data, newest 14 kept).' \
+              'Never edit by hand; delete a snapshot here to make the next build ignore it.' > README.md
+          fi
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No new 17Lands data."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet -m "17Lands data, ${{ steps.day.outputs.today }}"
+          git push --quiet origin data
+      - name: Decide whether to deploy
+        id: decide
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npx tsx scripts/deploy-check.ts
+      - name: Configure Pages
+        id: pages
+        if: steps.decide.outputs.deploy == 'true'
+        uses: actions/configure-pages@v6
+      - name: Build the site
+        if: steps.decide.outputs.deploy == 'true'
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+        run: npm run build
+      - name: Upload the site
+        if: steps.decide.outputs.deploy == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: data
+    if: needs.data.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

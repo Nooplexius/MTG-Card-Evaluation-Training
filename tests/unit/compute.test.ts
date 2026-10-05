@@ -45,6 +45,7 @@ function input(over: Partial<ComputeInput> = {}): ComputeInput {
     cards: CARDS,
     tags: f.tags,
     cardsCsv: f.cardsCsv,
+    keywords: f.keywords,
     exports: [exportOf(tlaRows(), 'data/17lands/card-ratings-2026-10-01.csv', '2026-10-01'), exportOf(om1Rows(), 'data/17lands/card-ratings-2026-10-01 (1).csv', '2026-10-01')],
     exportErrors: [],
     snapshots: [],

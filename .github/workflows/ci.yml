@@ -1,0 +1,97 @@
+name: CI
+
+# Tests never contact 17Lands: the data build runs with --no-17lands (cards.csv from the shared input cache or the
+# committed test subset). Scryfall bulk files and the Standard list are cached for a day.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck, unit tests, end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: UTC date
+        id: day
+        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Shared inputs cache (Scryfall bulk data, Standard list)
+        uses: actions/cache@v6
+        with:
+          path: .cache
+          key: inputs-${{ steps.day.outputs.today }}
+          restore-keys: inputs-
+      - name: Build data (never contacts 17Lands)
+        run: npx tsx pipeline/cli.ts build --no-17lands
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end tests on phone viewports
+        run: npx playwright test --project=mobile --project=small
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: e2e-results
+          path: test-results
+          retention-days: 7
+
+  budgets:
+    name: Performance and accessibility budgets
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: UTC date
+        id: day
+        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Shared inputs cache (Scryfall bulk data, Standard list)
+        uses: actions/cache@v6
+        with:
+          path: .cache
+          key: inputs-${{ steps.day.outputs.today }}
+          restore-keys: inputs-
+      - name: Build data (never contacts 17Lands)
+        run: npx tsx pipeline/cli.ts build --no-17lands
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Core-loop budgets under 4x CPU throttling
+        run: npx playwright test --project=budgets
+      - name: Lighthouse mobile audit of a cold first visit (median of 3 runs)
+        run: |
+          export CHROME_PATH="$(node -e "import('@playwright/test').then((m) => console.log(m.chromium.executablePath()))")"
+          npx vite preview --port 4173 --strictPort --host 127.0.0.1 &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:4173/ && break; sleep 1; done
+          npm run lighthouse -- --runs 3
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lighthouse
+          path: artifacts
+          retention-days: 14

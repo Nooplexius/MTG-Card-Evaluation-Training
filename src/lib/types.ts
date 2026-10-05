@@ -123,6 +123,31 @@ export interface Drill {
   mastered: boolean;
 }
 
+/** One compare-mode pick: which of two same-set cards has the higher GIH WR. */
+export interface CompareRecord {
+  id?: number;
+  ts: number;
+  lset: string;
+  format: string;
+  dataDate: string;
+  left: string;
+  right: string;
+  leftOracle: string;
+  rightOracle: string;
+  leftWr: number;
+  rightWr: number;
+  leftN: number;
+  rightN: number;
+  leftG: number;
+  rightG: number;
+  pick: 'left' | 'right';
+  correct: boolean;
+  level: number;
+  z: number;
+  rtMs: number;
+  filter: string;
+}
+
 export interface ApiCacheEntry {
   k: string;
   ts: number;

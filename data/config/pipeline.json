@@ -8,6 +8,7 @@
   "staleAfterDays": 2,
   "appName": "Loupe",
   "appUrl": "https://nooplexius.github.io/MTG-Card-Evaluation-Training/",
+  "keepSnapshots": 14,
   "validation": {
     "minRowRatio": 0.95,
     "meanMin": 0.52,

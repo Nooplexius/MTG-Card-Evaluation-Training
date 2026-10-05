@@ -1,8 +1,8 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { ApiCacheEntry, CardSnapshot, Drill, Evaluation, Exposure, SavedFilter, SchedItem, Session, Skip } from './types.ts';
+import type { ApiCacheEntry, CardSnapshot, CompareRecord, Drill, Evaluation, Exposure, SavedFilter, SchedItem, Session, Skip } from './types.ts';
 
 export const DB_NAME = 'loupe';
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export interface Setting {
   key: string;
@@ -20,6 +20,7 @@ export type LoupeDB = Dexie & {
   skips: EntityTable<Skip, 'id'>;
   drills: EntityTable<Drill, 'id'>;
   apiCache: EntityTable<ApiCacheEntry, 'k'>;
+  compares: EntityTable<CompareRecord, 'id'>;
 };
 
 /** Schema history. Add a new version (never edit an old one) and migrate in its upgrade(). */
@@ -37,6 +38,7 @@ export function openDb(name = DB_NAME): LoupeDB {
     drills: 'id, startedAt, facetId',
     apiCache: 'k, ts',
   });
+  db.version(2).stores({ compares: '++id, ts, lset' });
   return db;
 }
 
@@ -46,7 +48,7 @@ export function db(): LoupeDB {
   return shared;
 }
 
-export const EXPORT_TABLES = ['evaluations', 'cards', 'exposures', 'sched', 'sessions', 'filters', 'settings', 'skips', 'drills'] as const;
+export const EXPORT_TABLES = ['evaluations', 'cards', 'exposures', 'sched', 'sessions', 'filters', 'settings', 'skips', 'drills', 'compares'] as const;
 
 export interface Backup {
   app: 'loupe';

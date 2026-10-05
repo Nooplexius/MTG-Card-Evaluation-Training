@@ -1,11 +1,14 @@
+import { pickPair, type CompareCand } from '../lib/compare.ts';
 import type { Manifest, ManifestSet, SetFile, TagsFile } from '../lib/data.ts';
 import type { LoupeDB } from '../lib/db.ts';
 import { Pool, type PoolEntry } from '../lib/pool.ts';
 import { seededRng, type Rng } from '../lib/random.ts';
 import { pickAdaptive, ShuffleBag, updateAfter, SCHED, type Candidate, type Pick, type WeakFacet } from '../lib/scheduler.ts';
 import { colorGroupFor, midRankPercentiles } from '../lib/setstats.ts';
-import type { Evaluation, Exposure, Mode, SchedItem } from '../lib/types.ts';
+import type { CardSnapshot, Evaluation, Exposure, Mode, SchedItem } from '../lib/types.ts';
 import type { CardView, Selection } from '../lib/view.ts';
+import type { Subject } from '../lib/query/local.ts';
+import { contextFromTags, QueryService, type QueryOutcome, type QueryProgress } from './queryService.ts';
 
 export type FetchJson = (url: string) => Promise<unknown>;
 
@@ -33,19 +36,64 @@ export class Engine {
   bag = new ShuffleBag();
   rng: Rng;
   filterKeys: string[] | null = null;
+  /** When offline: pool keys whose display image is cached; practice draws only from these. */
+  offlineKeys: Set<string> | null = null;
   weak: WeakFacet[] = [];
   rtRef = SCHED.rtRefMs;
+  query: QueryService;
+  practiceQuery = '';
   private base = '';
   private loading = new Map<string, Promise<PoolEntry[]>>();
   private percentiles = new Map<string, Map<string, { draft: number | null; perf: number }>>();
   private onProgress: EngineEvents['progress'] | null = null;
+  private subjectCache: { n: number; subjects: Subject[] } | null = null;
 
   constructor(
     private db: LoupeDB | null,
     private fetchJson: FetchJson,
     seed: number = Date.now(),
+    fetchImpl: typeof fetch = (...a) => fetch(...a),
   ) {
     this.rng = seededRng(seed);
+    this.query = new QueryService(db, fetchImpl);
+  }
+
+  /** Query subjects for the pool: each entry's display printing plus its limited set, crowd class and tags. */
+  poolSubjects(): Subject[] {
+    if (this.subjectCache && this.subjectCache.n === this.pool.entries.length) return this.subjectCache.subjects;
+    const subjects = this.pool.entries.map((e) => ({ p: e.card.p, lset: e.set, crowd: e.card.c, tags: new Set(e.tags) }));
+    this.subjectCache = { n: this.pool.entries.length, subjects };
+    return subjects;
+  }
+
+  /** Evaluates a query over the pool without changing the practice filter. */
+  async queryPool(q: string, onProgress?: (p: QueryProgress) => void): Promise<QueryOutcome & { keys: string[] | null }> {
+    await this.loadAll();
+    const out = await this.query.run(q, this.poolSubjects(), contextFromTags(this.tags), onProgress);
+    return { ...out, keys: out.matches ? out.matches.map((i) => this.pool.entries[i].key) : null };
+  }
+
+  /** Sets the practice filter; on an error or a missing connection the last valid pool stays active. */
+  async setPracticeQuery(q: string, onProgress?: (p: QueryProgress) => void): Promise<QueryOutcome> {
+    if (q.trim() === '') {
+      this.practiceQuery = '';
+      this.filterKeys = null;
+      const count = (this.manifest?.sets ?? []).reduce((n, s) => n + s.cards, 0);
+      return { query: '', matches: null, count, error: null, warnings: [], needsConnection: false, rateLimited: false, usedApi: false };
+    }
+    const { keys, ...rest } = await this.queryPool(q, onProgress);
+    if (keys && !rest.error) {
+      this.practiceQuery = rest.query;
+      this.filterKeys = rest.query === '' ? null : keys;
+    }
+    return { ...rest, matches: null };
+  }
+
+  /** Query over stored card snapshots (history and stats); returns matching snapshot ids. */
+  async querySnapshots(q: string, snaps: CardSnapshot[], onProgress?: (p: QueryProgress) => void): Promise<QueryOutcome & { ids: string[] | null }> {
+    const subjects: Subject[] = snaps.map((s) => ({ p: s.printing, lset: s.lset, crowd: s.crowd, tags: new Set(s.tags) }));
+    const out = await this.query.run(q, subjects, contextFromTags(this.tags), onProgress);
+    return { ...out, matches: null, ids: out.matches ? out.matches.map((i) => snaps[i].id) : null };
   }
 
   on(cb: EngineEvents['progress']) {
@@ -120,7 +168,11 @@ export class Engine {
 
   candidates(restrict?: string[]): Candidate[] {
     const keys = restrict ?? this.filterKeys;
-    const entries = keys ? keys.map((k) => this.pool.get(k)).filter((e): e is PoolEntry => !!e) : this.pool.entries;
+    let entries = keys ? keys.map((k) => this.pool.get(k)).filter((e): e is PoolEntry => !!e) : this.pool.entries;
+    if (this.offlineKeys) {
+      const off = this.offlineKeys;
+      entries = entries.filter((e) => off.has(e.key));
+    }
     return entries.map((e) => ({ key: e.key, oracleId: e.card.o, set: e.set, band: e.band, colorKey: e.colorKey }));
   }
 
@@ -223,6 +275,23 @@ export class Engine {
 
   requeue(key: string) {
     this.bag.requeue(key, this.rng);
+  }
+
+  /** A compare-mode pair from the practice pool (the filter and offline rules apply), preferring cards already shown. */
+  comparePair(level: number, avoid: string[]): { left: CardView; right: CardView; level: number; z: number } | null {
+    const cands: CompareCand[] = [];
+    const prefer = new Set<string>();
+    for (const c of this.candidates()) {
+      const e = this.pool.get(c.key);
+      if (!e) continue;
+      cands.push({ key: c.key, set: c.set, oracleId: c.oracleId, g: e.card.g, wr: e.card.s.gihWr, n: e.card.s.gih });
+      if (this.exposed.has(c.oracleId)) prefer.add(c.key);
+    }
+    const p = pickPair(cands, level, this.rng, { avoid: new Set(avoid), prefer });
+    if (!p) return null;
+    const left = this.view(p.left.key);
+    const right = this.view(p.right.key);
+    return left && right ? { left, right, level: p.level, z: p.z } : null;
   }
 
   /** Same set, similar role, clearly different grade; already-exposed cards first. */

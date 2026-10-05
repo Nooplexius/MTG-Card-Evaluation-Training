@@ -18,9 +18,10 @@
         window.__LOUPE_STARTER__ = null;
         try {
           if (!s || !s.cards || !s.cards.length || localStorage.getItem('loupe.visited')) return;
+          if (/^(menu|filter|stats|insights|history|settings|about|data|compare|summary)$/.test(location.hash.replace(/^#\/?/, '').split('/')[0])) return;
           var c = s.cards[Math.floor(Math.random() * s.cards.length)];
           var url = 'https://cards.scryfall.io/display/front/' + c.id[0] + '/' + c.id[1] + '/' + c.id + '.webp' + (c.v ? '?' + c.v : '');
-          window.__LOUPE_STARTER__ = { card: c, url: url, hash: s.hash };
+          window.__LOUPE_STARTER__ = { card: c, url: url, hash: s.hash, shell: s.shell };
           var l = document.createElement('link');
           l.rel = 'preload';
           l.as = 'image';
@@ -34,6 +35,32 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var st = window.__LOUPE_STARTER__;
+        if (!st || !st.shell) return;
+        var esc = function (x) {
+          return String(x).replace(/[&<>"]/g, function (ch) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch];
+          });
+        };
+        var root = document.getElementById('root');
+        root.innerHTML = st.shell.replace('__URL__', esc(st.url)).replace('__NAME__', esc(st.card.name));
+        var img = root.querySelector('.card-box__img');
+        if (img) {
+          if (img.complete) window.__LOUPE_STARTER_LOADED__ = Date.now();
+          else img.addEventListener('load', function () {
+            window.__LOUPE_STARTER_LOADED__ = Date.now();
+          });
+        }
+        root.addEventListener('click', function (e) {
+          var k = e.target.closest && e.target.closest('.shell .key[data-g]');
+          if (!k || window.__LOUPE_EARLY_GRADE__) return;
+          window.__LOUPE_EARLY_GRADE__ = { g: Number(k.getAttribute('data-g')), at: Date.now() };
+          k.classList.add('is-pressed');
+        });
+      })();
+    </script>
     <noscript>Loupe needs JavaScript to run.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
