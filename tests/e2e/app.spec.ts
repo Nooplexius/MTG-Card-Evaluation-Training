@@ -112,6 +112,23 @@ test('a touch tap starts audio and the sounds are loud enough for a phone speake
   await expect.poll(() => page.evaluate(() => (window as unknown as { __peak: number }).__peak), { timeout: 3000 }).toBeGreaterThan(0.25);
 });
 
+test('changing the session length applies to the session in progress', async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByRole('radio', { name: 'Endless', exact: true }).click();
+  await page.goto('/');
+  await play(page, 11);
+  await cardReady(page);
+  await expect(page.locator('.credit__count')).toHaveText('12');
+  await page.goto('/#/settings');
+  await page.getByRole('radio', { name: '10', exact: true }).click();
+  await page.goto('/');
+  await cardReady(page);
+  await expect(page.locator('.credit__count')).toHaveText('10 / 10');
+  await grade(page, 'C');
+  await next(page);
+  await expect(page.getByRole('heading', { name: 'Session complete' })).toBeVisible();
+});
+
 test('every control gives sound, haptic and motion feedback', async ({ page }) => {
   await page.goto('/');
   await cardReady(page);

@@ -7,7 +7,7 @@ import type { StarterInfo } from '../AppContext.tsx';
 import { engine } from '../engineClient.ts';
 import { feedback } from '../feedback/feedback.ts';
 import { prefetchUpcoming } from '../offline.ts';
-import { getSettings } from '../settings.ts';
+import { getSettings, useSettings } from '../settings.ts';
 import { cardImageUrl, preloadImage } from './CardFace.tsx';
 
 export const DEAL_MS = 220;
@@ -79,6 +79,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
   const [session, setSession] = useState<Session | null>(null);
   const [streak, setStreak] = useState(0);
   const [today, setToday] = useState(0);
+  const { sessionLength } = useSettings();
   const todayRef = useRef(0);
   const queue = useRef<Selection[]>([]);
   const planning = useRef<Promise<void> | null>(null);
@@ -152,8 +153,10 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
       if (cancelled) return;
       const startedHere = sessionRef.current !== null && !opts.drillId;
       if (!startedHere && open && open.current && (!starter || open.done > 0) && open.mode === modeRef.current) {
-        sessionRef.current = open;
-        setSession(open);
+        if (open.drillId || open.length === getSettings().sessionLength) {
+          sessionRef.current = open;
+          setSession(open);
+        } else persistSession({ ...open, length: getSettings().sessionLength });
         const v = await e.call('viewWhenReady', open.current);
         if (cancelled) return;
         if (v) {
@@ -187,6 +190,13 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
       cancelled = true;
     };
   }, [manifest, opts.drillId]);
+
+  // A new session length applies to the open session too; at or past the new length it ends after the current card.
+  useEffect(() => {
+    const ses = sessionRef.current;
+    if (!ses || ses.drillId || ses.endedAt !== null || ses.length === sessionLength) return;
+    persistSession({ ...ses, length: sessionLength });
+  }, [sessionLength]);
 
   // A new filter or mode replans the upcoming cards (the card on screen stays).
   useEffect(() => {
