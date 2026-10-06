@@ -293,48 +293,4 @@ export class Engine {
     const right = this.view(p.right.key);
     return left && right ? { left, right, level: p.level, z: p.z } : null;
   }
-
-  /** Same set, similar role, clearly different grade; already-exposed cards first. */
-  contrasts(key: string, n = 3, avoid: string[] = []): CardView[] {
-    const e = this.pool.get(key);
-    if (!e) return [];
-    const avoidSet = new Set(avoid);
-    const type = primaryType(e.card.p.type_line);
-    const colors = new Set(e.card.col.split(''));
-    const scored = (this.pool.bySet.get(e.set) ?? [])
-      .filter((o) => o.key !== key && !avoidSet.has(o.key) && o.card.o !== e.card.o && Math.abs(o.card.g - e.card.g) >= 3)
-      .map((o) => {
-        let s = 0;
-        if (primaryType(o.card.p.type_line) === type) s += 3;
-        const dmv = Math.abs(o.card.p.cmc - e.card.p.cmc);
-        if (dmv === 0) s += 3;
-        else if (dmv === 1) s += 2;
-        const oc = o.card.col.split('');
-        if (o.card.col === e.card.col) s += 3;
-        else if (oc.some((c) => colors.has(c))) s += 1.5;
-        if (this.exposed.has(o.card.o)) s += 4;
-        s += this.rng() * 0.5;
-        return { o, s };
-      })
-      .sort((a, b) => b.s - a.s);
-    const higher = scored.filter((x) => x.o.card.g > e.card.g);
-    const lower = scored.filter((x) => x.o.card.g < e.card.g);
-    const picks: PoolEntry[] = [];
-    if (higher[0]) picks.push(higher[0].o);
-    if (lower[0]) picks.push(lower[0].o);
-    for (const x of scored) {
-      if (picks.length >= n) break;
-      if (!picks.includes(x.o)) picks.push(x.o);
-    }
-    return picks
-      .slice(0, n)
-      .sort((a, b) => b.card.g - a.card.g)
-      .map((p) => this.view(p.key) as CardView);
-  }
-}
-
-export function primaryType(typeLine: string): string {
-  const front = typeLine.split(' // ')[0];
-  for (const t of ['Creature', 'Planeswalker', 'Battle', 'Instant', 'Sorcery', 'Enchantment', 'Artifact', 'Land']) if (front.includes(t)) return t;
-  return 'Other';
 }

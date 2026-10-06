@@ -30,7 +30,6 @@ export type Phase = 'boot' | 'grading' | 'revealed' | 'summary' | 'empty';
 
 export interface RevealState {
   user: number;
-  contrasts: CardView[] | null;
   firstLook: boolean | null;
   /** Set on the card that reaches today's goal. */
   goalReached: boolean;
@@ -217,7 +216,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     const goal = getSettings().dailyGoal;
     const goalReached = todayRef.current === goal;
     setToday(todayRef.current);
-    setReveal({ user: g, contrasts: null, firstLook: null, goalReached, drillMastered: false });
+    setReveal({ user: g, firstLook: null, goalReached, drillMastered: false });
     setPhase('revealed');
     const sesAtCommit = ensureSession();
     persistSession({ ...sesAtCommit, done: sesAtCommit.done + 1 });
@@ -278,10 +277,6 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     setReveal((r) => (r ? { ...r, firstLook: saved.firstLook, drillMastered: Boolean(saved.drill?.mastered) } : r));
     const s2 = sessionRef.current;
     if (s2 && saved.drill?.finished && s2.length !== s2.done) persistSession({ ...s2, length: s2.done });
-    const avoid = [view.key, ...queue.current.map((q) => q.view.key)];
-    const contrasts = await e.call('contrasts', view.key, 3, avoid);
-    setReveal((r) => (r && r.user === g ? { ...r, contrasts } : r));
-    void e.call('expose', contrasts.map((c) => c.card.o), 'contrast');
     void refill();
   }, []);
 
