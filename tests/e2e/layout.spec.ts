@@ -42,6 +42,22 @@ test('card and grade pad fit one viewport without scrolling, and nothing covers 
   expect(shrunk.y + shrunk.height).toBeLessThanOrEqual(reveal.y + 1);
 });
 
+test('the reveal shows everything at once, without scrolling in either direction', async ({ page }) => {
+  await page.goto('/');
+  for (let i = 0; i < 6; i++) {
+    await cardReady(page);
+    await grade(page, ['B', 'C', 'A−', 'D+', 'C−', 'B+'][i]);
+    await expect(page.locator('.reveal__why li').first()).toBeVisible();
+    const overflow = await page.evaluate(() => {
+      const s = document.querySelector('.reveal__scroll') as HTMLElement;
+      return { down: s.scrollHeight - s.clientHeight, across: s.scrollWidth - s.clientWidth, page: (document.scrollingElement as Element).scrollWidth - innerWidth };
+    });
+    expect(overflow).toEqual({ down: 0, across: 0, page: 0 });
+    await expect(page.locator('.reveal__links')).toBeInViewport();
+    await page.locator('button.next').click();
+  }
+});
+
 test('wide screens put the card beside the pad and accept keyboard grades', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/');

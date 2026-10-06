@@ -70,14 +70,14 @@ A 5 × 3 key bed, not the default 4 × 3 + F:
 ## Layout
 
 - Portrait 360–430 px: compact top bar (menu, filter summary, session count), the 17Lands credit line, the card (63:88 box reserved before the image loads), then the key bed in the bottom third, above the safe-area inset.
-- During the reveal the card shrinks toward the top and the reveal panel replaces the key bed. Nothing is ever drawn on top of the card image: grades, tints and glows sit around it.
+- During the reveal the panel replaces the key bed at the height of its content and the card shrinks into the space above it, so everything shows at once with no scrolling from 360 × 640 up. Nothing is ever drawn on top of the card image: grades, tints and glows sit around it.
 - Wide screens (≥ 900 px): card on the left, pad or reveal on the right, keyboard hints visible.
 - Every other screen (filter, stats, insights, history, settings, about) is a full-screen view that replaces practice.
 - Compare mode mirrors a two-card draft pick: the question and both cards sit centered as one group, each card over an info block of fixed height (name before the pick; grade, GIH WR, games and ALSA after), so nothing moves at the reveal. The two pick buttons sit in the thumb zone under their cards. The winner gets a brass ring around its card box, never on the image; a tap on a card opens it full size.
 
 ## Motion
 
-- Core-loop motion stays within 400 ms: deal-in 220 ms (rise 24 px, scale 0.96 → 1, fade in); key press spring (stiffness 700, damping 32, scale 0.94); reveal stagger: grade stamp at 0 ms (scale 1.15 → 1, 160 ms), difference at 60 ms, win-rate count-up 0–320 ms, strip marker slide 280 ms, contrasts at 200 ms.
+- Core-loop motion stays within 400 ms: deal-in 220 ms (rise 24 px, scale 0.96 → 1, fade in); key press spring (stiffness 700, damping 32, scale 0.94); reveal stagger: grade stamp at 0 ms (scale 1.15 → 1, 160 ms), difference at 60 ms, win-rate count-up 0–320 ms, strip marker slide 280 ms.
 - The next tap skips whatever is still animating.
 - Only `transform` and `opacity` animate. With `prefers-reduced-motion` (or the setting), everything becomes a 120 ms fade and count-ups jump to the value.
 - Summaries and charts draw in once (stroke-dashoffset is avoided; bars scale from their baseline with transforms).
@@ -86,7 +86,7 @@ A 5 × 3 key bed, not the default 4 × 3 + F:
 
 One feedback layer maps every action name (`grade.press`, `grade.commit`, `reveal.exact`, `nav.open`, …) to a sound, a haptic pattern and a motion token. Discrete actions get sound and motion; typing, scrolling and dragging map to `none` or subtle motion.
 
-- Sounds are synthesized with the Web Audio API: soft, short (≤ 250 ms), each play detuned ±3% and gain ±10% so repetition never grates.
+- Sounds are synthesized with the Web Audio API: short (≤ 250 ms), each play detuned ±3% and gain ±10% so repetition never grates. Levels are set for phone speakers (peaks around −7 dBFS through a limiter, no sound carried below 250 Hz). On iPhone they follow the Ring/Silent switch.
   - Key press: a muted wooden tick. Commit: a small brass tink.
   - Result: exact = a bright three-note bell, within one step = a two-note rise, miss = a low felt thump (never a buzzer).
   - Streaks raise the result chime one pentatonic step per streak level; milestones (daily goal, personal best) get a four-note flourish.

@@ -14,7 +14,7 @@ if (action === 'pick') {
 } else if (action?.startsWith('grade:')) {
   await page.locator('.shell').waitFor({ state: 'detached' }).catch(() => undefined);
   await page.locator(`.pad button[aria-label="${action.slice(6)}"]`).click();
-  await page.locator('.contrast').first().waitFor();
+  await page.locator('.reveal__why li').first().waitFor();
   await page.waitForTimeout(900);
 }
 await page.screenshot({ path: out });

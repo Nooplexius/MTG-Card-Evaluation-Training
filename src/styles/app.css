@@ -137,9 +137,10 @@
   padding: 4px 0;
 }
 
+/* During the reveal the panel takes the height of its content and the card the rest. */
 .practice[data-phase='revealed'] .card-slot {
-  flex: 0 0 34%;
-  min-height: 140px;
+  flex: 1 1 0;
+  min-height: 120px;
 }
 
 /* Width-bound (tall screens): tools in a row under the card. */
@@ -353,7 +354,7 @@
 
 /* ---------- Reveal ---------- */
 .reveal {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -367,15 +368,16 @@
 .reveal__scroll {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-top: 4px;
 }
 .reveal__head {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: end;
-  gap: 14px;
+  gap: 12px;
 }
 .reveal__side,
 .reveal__truth {
@@ -386,10 +388,12 @@
 }
 .reveal__diff {
   justify-self: end;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   padding-bottom: 4px;
+  text-align: right;
 }
 .reveal__diffText {
   font-size: 1.6rem;
@@ -454,14 +458,17 @@
   min-width: 2.1em;
 }
 
+/* Clipped: the marker rails are full-width boxes shifted right by the grade's position. */
 .strip {
   position: relative;
-  height: 34px;
-  margin: 10px 0 2px;
+  height: 38px;
+  margin: 8px 0 0;
+  overflow: hidden;
+  overflow: clip;
 }
 .strip__track {
   position: absolute;
-  inset: 8px 0 auto 0;
+  inset: 10px 0 auto 0;
   display: grid;
   grid-template-columns: repeat(13, 1fr);
   gap: 2px;
@@ -480,7 +487,7 @@
 .strip__rail {
   position: absolute;
   left: 0;
-  top: 0;
+  top: 2px;
   width: 100%;
   height: 24px;
   pointer-events: none;
@@ -509,7 +516,7 @@
 }
 .strip__ends {
   position: absolute;
-  inset: 22px 0 0 0;
+  inset: 25px 0 0 0;
   display: flex;
   justify-content: space-between;
   font-size: 0.7rem;
@@ -545,46 +552,11 @@
   border-left: 2px solid var(--felt-4);
   margin-bottom: 3px;
 }
-.reveal__contrasts {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-.reveal__contrastNote {
-  flex: 1 1 100%;
-  font-size: 0.72rem;
-  color: var(--bone-3);
-}
-.contrast {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 48px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-.contrast__img {
-  display: block;
-  width: 64px;
-  aspect-ratio: 63 / 88;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--felt-2);
-}
-.contrast__img img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
 .reveal__links {
   display: flex;
-  gap: 16px;
-  margin: 10px 0 4px;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  margin: 6px 0 0;
   font-size: var(--fs-small);
 }
 .reveal__links a {
@@ -791,6 +763,38 @@
   gap: 16px;
   margin-top: 24px;
   color: var(--bone-2);
+}
+
+/* Short screens: the reveal fits without scrolling down to 360 × 640. */
+@media (max-height: 740px) {
+  .reveal .chip--xl {
+    font-size: 2.5rem;
+  }
+  .reveal .chip--lg {
+    font-size: 1.6rem;
+  }
+  .reveal__diffText {
+    font-size: 1.4rem;
+  }
+  .strip {
+    margin-top: 4px;
+  }
+  .reveal__numbers {
+    margin-top: 2px;
+  }
+  .reveal__why {
+    margin-top: 4px;
+  }
+  .reveal__why li {
+    padding: 1px 0 1px 10px;
+    margin-bottom: 2px;
+  }
+  .reveal__links {
+    margin-top: 2px;
+  }
+  .reveal__links a {
+    min-height: 28px;
+  }
 }
 
 /* ---------- Zoom ---------- */

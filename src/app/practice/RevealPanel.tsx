@@ -1,6 +1,5 @@
 import { m } from 'motion/react';
 import { useEffect, useRef } from 'react';
-import { displayName, imageUrl } from '../../lib/card.ts';
 import { UNCERTAINTY_SHOW_STEPS } from '../../lib/grades.ts';
 import type { CardView } from '../../lib/view.ts';
 import { Tap, TapLink } from '../ui/Tap.tsx';
@@ -84,16 +83,14 @@ export function scryfallUrl(v: CardView): string {
 export interface RevealProps {
   view: CardView;
   user: number;
-  contrasts: CardView[] | null;
   reduced: boolean;
   onNext: () => void;
-  onContrast: (v: CardView) => void;
   nextLabel: string;
   streak: number;
   notes?: string[];
 }
 
-export function RevealPanel({ view, user, contrasts, reduced, onNext, onContrast, nextLabel, streak, notes = [] }: RevealProps) {
+export function RevealPanel({ view, user, reduced, onNext, nextLabel, streak, notes = [] }: RevealProps) {
   const actual = view.card.g;
   const err = user - actual;
   const d = diffWords(err);
@@ -121,8 +118,8 @@ export function RevealPanel({ view, user, contrasts, reduced, onNext, onContrast
             <GradeChip g={actual} size="xl" stamp reduced={reduced} />
           </div>
           <m.div className={`reveal__diff tone-${d.tone}`} {...enter(0.06)}>
-            <span className="reveal__diffText display">{d.text}</span>
-            <span className="reveal__diffUnit">{err === 0 ? 'on the 13-step scale' : 'steps'}</span>
+            <span className="reveal__diffText display">{err === 0 ? 'Exact' : `${err > 0 ? '+' : '\u2212'}${Math.abs(err)}`}</span>
+            <span className="reveal__diffUnit">{err === 0 ? 'on the 13-step scale' : `step${Math.abs(err) === 1 ? '' : 's'} ${err > 0 ? 'overrated' : 'underrated'}`}</span>
             {streak >= 3 && <span className="reveal__streak">{streak} in a row</span>}
           </m.div>
         </div>
@@ -155,17 +152,6 @@ export function RevealPanel({ view, user, contrasts, reduced, onNext, onContrast
             <li key={l}>{l}</li>
           ))}
         </m.ul>
-        <m.div className="reveal__contrasts" {...enter(0.2)}>
-          {(contrasts ?? []).map((c) => (
-            <Tap key={c.key} fb="card.zoom" className="contrast" onTap={() => onContrast(c)} aria-label={`${displayName(c.card.p)}, ${gradeSpoken(c.card.g)}. Open`}>
-              <span className="contrast__img">
-                <img src={imageUrl(c.card.p, 'grid')} alt="" width={146} height={204} loading="eager" decoding="async" crossOrigin="anonymous" />
-              </span>
-              <GradeChip g={c.card.g} size="sm" />
-            </Tap>
-          ))}
-          {contrasts && contrasts.length > 0 && <span className="reveal__contrastNote">Same set, similar role, different grade</span>}
-        </m.div>
         <div className="reveal__links">
           <TapLink href={scryfallUrl(view)}>Scryfall</TapLink>
           <TapLink href={view.cardDataUrl}>17Lands Card Data · {view.set}</TapLink>

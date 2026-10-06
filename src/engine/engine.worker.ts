@@ -94,10 +94,6 @@ const api = {
     await engine.loadSet(set);
     return engine.view(key);
   },
-  async contrasts(key: string, n: number, avoid: string[]) {
-    await initialized;
-    return engine.contrasts(key, n, avoid);
-  },
   async isExposed(oracleId: string) {
     await initialized;
     return engine.isExposed(oracleId);

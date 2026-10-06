@@ -24,7 +24,7 @@ Status: `[x]` done · `[~]` in progress · `[ ]` to do · `[!]` waiting on the o
 
 ## M2 · Core loop
 - [x] DESIGN.md (concept, palette, type, grade scale, motion, sound)
-- [x] Card view (63:88 reserved, zoom, DFC flip, text view), 5×3 grade key bed, reveal with contrasts
+- [x] Card view (63:88 reserved, zoom, DFC flip, text view), 5×3 grade key bed, reveal that fits without scrolling
 - [x] Persistence (Dexie in the worker), sessions, resume, skip; attribution on the practice screen
 
 ## M3 · Shared filter

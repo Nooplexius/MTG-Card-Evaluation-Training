@@ -225,11 +225,9 @@ export function PracticeScreen({ filterLabel, filterCount, filterVersion, drill,
           <RevealPanel
             view={view}
             user={p.reveal.user}
-            contrasts={p.reveal.contrasts}
             reduced={reduced}
             streak={p.streak}
             onNext={p.next}
-            onContrast={(c) => setZoom({ printing: c.card.p, view: c })}
             notes={[...(p.reveal.goalReached ? [`Daily goal reached: ${p.today} cards today`] : []), ...(p.reveal.drillMastered ? ['Drill mastered: the last 8 cards were on target'] : [])]}
             nextLabel={p.session && p.session.length > 0 && p.session.done >= p.session.length ? 'See session summary' : 'Next card'}
           />

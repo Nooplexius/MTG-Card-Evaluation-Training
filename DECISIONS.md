@@ -75,3 +75,9 @@ Judgment calls where the brief left room, or where live sources differed from it
 
     Before, only the set's own printings counted toward the 90%, which left MKM unassigned at 87.5%. A card found only through Arena printings elsewhere shows the newest printing released by the set's release date, as it was drafted.
 28. **MSH's bonus sheet** is Marvel Universe (MAR, 100 cards). It has no parent set on Scryfall, so it's configured as an extra bonus sheet, like OM1's OMB.
+
+## Owner feedback, 2026-10-06
+
+29. **No contrasting cases in the reveal.** The owner found "same set, similar role, different grade" rarely meaningful, so the reveal no longer shows them, and those cards are no longer marked as seen. The reveal panel now takes the height of its content and the card fills the space above, so everything fits without scrolling from 360 × 640 up; an e2e test checks six reveals at 390 × 844 and 360 × 640.
+30. **Sound you can hear on a phone.** The first sounds peaked around −20 to −33 dBFS, and the low thumps (88–196 Hz) sat below what phone speakers reproduce. Sounds are now about 12 dB louder through a limiter, with their low notes moved into the midrange. Audio unlocks on every tap release, click or key press, playing a silent buffer for iOS. A sound error can't stop the action it accompanies. Settings has a test button and notes that iPhones keep web sounds silent while the Ring/Silent switch is on silent. Overriding that switch would also stop the user's music, so the app respects it.
+31. **Session length applies to the open session.** Changing it in Settings, or resuming a session saved with an old length, updates the session in progress. A session at or past its new length ends after the current card. Before, an endless session stayed endless after switching back to 20.
