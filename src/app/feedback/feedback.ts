@@ -60,7 +60,11 @@ let count = 0;
 /** Fires the sound and haptic for an action and returns its motion token. */
 export function feedback(ev: FeedbackEvent, opts: { level?: number } = {}): MotionToken {
   const spec: FeedbackSpec = FEEDBACK[ev];
-  if (spec.sound !== 'none') playSound(spec.sound, opts.level ?? 0);
+  try {
+    if (spec.sound !== 'none') playSound(spec.sound, opts.level ?? 0);
+  } catch {
+    /* a sound must never stop the action it accompanies */
+  }
   if (spec.haptic !== 'none' && getSettings().haptics && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
     try {
       navigator.vibrate(spec.haptic as number[]);

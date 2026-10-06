@@ -123,6 +123,12 @@ export function SettingsScreen() {
             onKeyUp={() => feedback('reveal.close')}
           />
         </div>
+        <div className="field field--row">
+          <span className="field__note">On iPhone, sounds are silent while the Ring/Silent switch is set to silent.</span>
+          <Tap fb="reveal.exact" className="btn">
+            Play a test sound
+          </Tap>
+        </div>
         <Toggle label="Mute" value={s.muted} onChange={(v) => setSettings({ muted: v })} />
         <Toggle label="Haptics" value={s.haptics} onChange={(v) => setSettings({ haptics: v })} note="Where the device supports vibration" />
         <Segmented

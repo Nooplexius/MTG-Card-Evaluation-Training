@@ -5,10 +5,12 @@ import './styles/base.css';
 import './styles/app.css';
 import { App } from './app/App.tsx';
 import { captureInstallPrompt } from './app/install.ts';
+import { watchAudioUnlock } from './app/feedback/sound.ts';
 import { watchConnectivity } from './app/offline.ts';
 
 captureInstallPrompt();
 watchConnectivity();
+watchAudioUnlock();
 
 createRoot(document.getElementById('root') as HTMLElement).render(<App />);
 

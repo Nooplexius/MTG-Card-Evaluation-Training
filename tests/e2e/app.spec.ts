@@ -89,6 +89,29 @@ test('practice keeps working offline from cached cards', async ({ page, context 
   await context.setOffline(false);
 });
 
+test('a touch tap starts audio and the sounds are loud enough for a phone speaker', async ({ page }) => {
+  await page.addInitScript(`
+    window.__peak = 0;
+    const connect = AudioNode.prototype.connect;
+    AudioNode.prototype.connect = function (dest, ...rest) {
+      if (dest instanceof AudioDestinationNode) {
+        const an = this.context.createAnalyser();
+        an.fftSize = 2048;
+        connect.call(this, an);
+        const buf = new Float32Array(an.fftSize);
+        const tick = () => { an.getFloatTimeDomainData(buf); for (const x of buf) window.__peak = Math.max(window.__peak, Math.abs(x)); setTimeout(tick, 10); };
+        tick();
+      }
+      return connect.call(this, dest, ...rest);
+    };
+  `);
+  await page.goto('/');
+  await cardReady(page);
+  await page.locator('.pad button[aria-label="B"]').tap();
+  await expect(page.locator('button.next')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __peak: number }).__peak), { timeout: 3000 }).toBeGreaterThan(0.25);
+});
+
 test('every control gives sound, haptic and motion feedback', async ({ page }) => {
   await page.goto('/');
   await cardReady(page);
