@@ -1,3 +1,4 @@
+import { chooseHalfLife, DECAY, decayWeights, kish, type HalfLifeChoice, type PreqRow } from './decay.ts';
 import type { Facet } from './facets.ts';
 import { C_INDEX } from './grades.ts';
 import { cholesky, cholSolve } from './linalg.ts';
@@ -87,6 +88,10 @@ export interface Model {
   seIntercept: number;
   effects: FacetEffect[];
   residuals: number[];
+  /** First looks after which a first look counts half (Infinity: nothing decays). */
+  halfLife: number;
+  /** Kish effective number of first looks under that decay. */
+  nEff: number;
 }
 
 const steps = (x: number) => `${Math.abs(x).toFixed(1)} step${Math.abs(x).toFixed(1) === '1.0' ? '' : 's'}`;
@@ -106,17 +111,32 @@ interface Row {
 
 interface SmallFit {
   theta: Float64Array;
-  /** Full inverse of the (penalized) normal matrix, row-major. */
+  /** Full inverse G of the (penalized) normal matrix, row-major. */
   ginv: Float64Array;
+  /** Sandwich G (Xᵀ diag(w·d) X + Λ) G, before the dispersion factor; equals G when nothing decays. */
+  cov: Float64Array;
   resid: number[];
   phi: number;
   p: number;
 }
 
-/** Weighted least squares on [1, actual − C, selected facet indicators], ridge λ on the facet columns only. */
-function wlsFit(rows: Row[], w: Float64Array, selected: Facet[], lambda: number): SmallFit | null {
+/** Decay factors of the rows, with their sum and Kish effective size. */
+interface Decay {
+  d: Float64Array;
+  sum: number;
+  kish: number;
+}
+
+/**
+ * Weighted least squares on [1, actual − C, selected facet indicators], ridge λ on the facet columns only. Weights
+ * are w = d / (τ² + SE²): decay times precision. Down-weighting old rows makes the estimate track the user's
+ * current grading but leaves less information behind it, which the sandwich covariance charges for, so tests on
+ * these effects keep their nominal error rates.
+ */
+function wlsFit(rows: Row[], w: Float64Array, dec: Decay, selected: Facet[], lambda: number): SmallFit | null {
   const p = 2 + selected.length;
   const A = new Float64Array(p * p);
+  const M = new Float64Array(p * p);
   const b = new Float64Array(p);
   const x = new Float64Array(p);
   for (let i = 0; i < rows.length; i++) {
@@ -124,15 +144,21 @@ function wlsFit(rows: Row[], w: Float64Array, selected: Facet[], lambda: number)
     x[0] = 1;
     x[1] = r.a;
     for (let k = 0; k < selected.length; k++) x[2 + k] = r.fs.has(selected[k].id) ? 1 : 0;
+    const m = w[i] * dec.d[i];
     for (let j = 0; j < p; j++) {
       if (x[j] === 0) continue;
       b[j] += w[i] * x[j] * r.y;
-      for (let k = 0; k < p; k++) A[j * p + k] += w[i] * x[j] * x[k];
+      for (let k = 0; k < p; k++) {
+        A[j * p + k] += w[i] * x[j] * x[k];
+        M[j * p + k] += m * x[j] * x[k];
+      }
     }
   }
-  A[0] += 1e-9;
-  A[p + 1] += 1e-9;
-  for (let k = 2; k < p; k++) A[k * p + k] += lambda;
+  for (const Z of [A, M]) {
+    Z[0] += 1e-9;
+    Z[p + 1] += 1e-9;
+    for (let k = 2; k < p; k++) Z[k * p + k] += lambda;
+  }
   const L = cholesky(A, p);
   if (!L) return null;
   const theta = cholSolve(L, p, b);
@@ -144,17 +170,21 @@ function wlsFit(rows: Row[], w: Float64Array, selected: Facet[], lambda: number)
     const c = cholSolve(L, p, e);
     for (let k = 0; k < p; k++) ginv[k * p + j] = c[k];
   }
+  const GM = new Float64Array(p * p);
+  for (let i = 0; i < p; i++) for (let k = 0; k < p; k++) for (let j = 0; j < p; j++) GM[i * p + k] += ginv[i * p + j] * M[j * p + k];
+  const cov = new Float64Array(p * p);
+  for (let i = 0; i < p; i++) for (let k = 0; k < p; k++) for (let j = 0; j < p; j++) cov[i * p + k] += GM[i * p + j] * ginv[j * p + k];
   const resid = rows.map((r) => {
     let pred = theta[0] + theta[1] * r.a;
     for (let k = 0; k < selected.length; k++) if (r.fs.has(selected[k].id)) pred += theta[2 + k];
     return r.y - pred;
   });
   const wrss = resid.reduce((s, v, i) => s + w[i] * v * v, 0);
-  return { theta, ginv, resid, phi: Math.max(1, wrss / Math.max(1, rows.length - p)), p };
+  return { theta, ginv, cov, resid, phi: Math.max(1, ((wrss / dec.sum) * dec.kish) / Math.max(1, dec.kish - p)), p };
 }
 
 /** Effect of adding one facet to the current model (Frisch–Waugh): the facet indicator residualized on the model's columns. */
-function conditionalEffect(rows: Row[], w: Float64Array, fit: SmallFit, selected: Facet[], f: Facet, lambda: number): FacetEffect {
+function conditionalEffect(rows: Row[], w: Float64Array, dec: Decay, fit: SmallFit, selected: Facet[], f: Facet, lambda: number): FacetEffect {
   const p = fit.p;
   const h = new Float64Array(p);
   const members: number[] = [];
@@ -168,6 +198,7 @@ function conditionalEffect(rows: Row[], w: Float64Array, fit: SmallFit, selected
   const beta = new Float64Array(p);
   for (let j = 0; j < p; j++) for (let k = 0; k < p; k++) beta[j] += fit.ginv[j * p + k] * h[k];
   let S = 0;
+  let S2 = 0;
   let g = 0;
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
@@ -175,9 +206,10 @@ function conditionalEffect(rows: Row[], w: Float64Array, fit: SmallFit, selected
     for (let k = 0; k < selected.length; k++) if (r.fs.has(selected[k].id)) proj += beta[2 + k];
     const xt = (r.fs.has(f.id) ? 1 : 0) - proj;
     S += w[i] * xt * xt;
+    S2 += w[i] * dec.d[i] * xt * xt;
     g += w[i] * fit.resid[i] * xt;
   }
-  return { facetId: f.id, effect: g / (S + lambda), se: Math.sqrt(fit.phi / (S + lambda)), nEff: nEff(members), n: members.length };
+  return { facetId: f.id, effect: g / (S + lambda), se: Math.sqrt(fit.phi * (S2 + lambda)) / (S + lambda), nEff: nEff(members), n: members.length };
 }
 
 /**
@@ -188,32 +220,37 @@ function conditionalEffect(rows: Row[], w: Float64Array, fit: SmallFit, selected
  * Weights are 1/(τ̂² + SE²), τ̂ re-estimated from the residuals of the current model. Facet effects are lightly
  * shrunk (ridge λ), interactions harder.
  */
-export function fitModel(looks: FirstLook[], facets: Facet[]): Model | null {
+export function fitModel(looks: FirstLook[], facets: Facet[], halfLife = Infinity): Model | null {
   const n = looks.length;
   if (n < 10) return null;
   const used = facets.filter((f) => looks.some((l) => l.facets.includes(f.id)));
   const rows: Row[] = looks.map((l) => ({ a: l.actual - C_INDEX, y: l.user - C_INDEX, fs: new Set(l.facets) }));
-  const meanSe2 = looks.reduce((s, l) => s + l.se * l.se, 0) / n;
+  const d = decayWeights(n, halfLife);
+  const dec: Decay = { d, sum: d.reduce((a, b) => a + b, 0), kish: kish(d) };
+  const meanSe2 = looks.reduce((s, l, i) => s + d[i] * l.se * l.se, 0) / dec.sum;
   let tau2 = 1.5;
-  let w = Float64Array.from(looks, (l) => 1 / (tau2 + l.se * l.se));
+  const weights = () => Float64Array.from(looks, (l, i) => d[i] / (tau2 + l.se * l.se));
+  let w = weights();
   const selected: Facet[] = [];
-  let fit = wlsFit(rows, w, selected, INSIGHT.lambdaMain);
+  let fit = wlsFit(rows, w, dec, selected, INSIGHT.lambdaMain);
   if (!fit) return null;
   let conditional: FacetEffect[] = [];
   for (let step = 0; step < 12; step++) {
     for (let it = 0; it < 2; it++) {
-      tau2 = Math.max(0.09, (fit as SmallFit).resid.reduce((s, x) => s + x * x, 0) / Math.max(1, n - (fit as SmallFit).p) - meanSe2);
-      w = Float64Array.from(looks, (l) => 1 / (tau2 + l.se * l.se));
-      fit = wlsFit(rows, w, selected, INSIGHT.lambdaMain);
+      const cur = fit as SmallFit;
+      const rss = cur.resid.reduce((s, x, i) => s + d[i] * x * x, 0);
+      tau2 = Math.max(0.09, ((rss / dec.sum) * dec.kish) / Math.max(1, dec.kish - cur.p) - meanSe2);
+      w = weights();
+      fit = wlsFit(rows, w, dec, selected, INSIGHT.lambdaMain);
       if (!fit) return null;
     }
     const current = fit as SmallFit;
-    conditional = used.filter((f) => !selected.includes(f)).map((f) => conditionalEffect(rows, w, current, selected, f, f.interaction ? INSIGHT.lambdaInteraction : INSIGHT.lambdaMain));
+    conditional = used.filter((f) => !selected.includes(f)).map((f) => conditionalEffect(rows, w, dec, current, selected, f, f.interaction ? INSIGHT.lambdaInteraction : INSIGHT.lambdaMain));
     const byId = new Map(used.map((f) => [f.id, f] as const));
     const best = conditional.filter((e) => passes(e, byId.get(e.facetId) as Facet)).sort((a, b) => Math.abs(b.effect / b.se) - Math.abs(a.effect / a.se))[0];
     if (!best) break;
     selected.push(byId.get(best.facetId) as Facet);
-    const next = wlsFit(rows, w, selected, INSIGHT.lambdaMain);
+    const next = wlsFit(rows, w, dec, selected, INSIGHT.lambdaMain);
     if (!next) break;
     fit = next;
   }
@@ -223,20 +260,64 @@ export function fitModel(looks: FirstLook[], facets: Facet[]): Model | null {
     looks.forEach((l, i) => {
       if (l.facets.includes(f.id)) members.push(w[i]);
     });
-    return { facetId: f.id, effect: final.theta[2 + k], se: Math.sqrt(final.phi * final.ginv[(2 + k) * final.p + 2 + k]), nEff: nEff(members), n: members.length };
+    return { facetId: f.id, effect: final.theta[2 + k], se: Math.sqrt(final.phi * final.cov[(2 + k) * final.p + 2 + k]), nEff: nEff(members), n: members.length };
   });
   const p = final.p;
   return {
     n,
     tau: Math.sqrt(tau2),
     slope: final.theta[1],
-    seSlope: Math.sqrt(final.phi * final.ginv[p + 1]),
+    seSlope: Math.sqrt(final.phi * final.cov[p + 1]),
     intercept: final.theta[0],
-    seIntercept: Math.sqrt(final.phi * final.ginv[0]),
+    seIntercept: Math.sqrt(final.phi * final.cov[0]),
     effects: [...selectedEffects, ...conditional.filter((e) => !selected.some((f) => f.id === e.facetId))],
     residuals: final.resid,
     selected: selected.map((f) => f.id),
+    halfLife,
+    nEff: dec.kish,
   };
+}
+
+export type MemoryChoice = HalfLifeChoice & { model?: Model | null };
+
+/**
+ * Chooses how fast this user's evidence decays (see decay.ts). Candidates are scored on a compact version of the
+ * model: the calibration line plus the facets that matter under either no decay or the shortest memory, so a
+ * fading old bias and an emerging new one can both make a shorter memory predict better.
+ */
+export function chooseMemory(looks: FirstLook[], facets: Facet[]): MemoryChoice {
+  if (looks.length < DECAY.minLooks) return { halfLife: Infinity, scores: [], scored: 0 };
+  const all = fitModel(looks, facets, Infinity);
+  if (!all) return { halfLife: Infinity, scores: [], scored: 0, model: all };
+  const shortest = DECAY.halfLives[DECAY.halfLives.length - 1];
+  const recent = fitModel(looks, facets, shortest);
+  const byId = new Map(facets.map((f) => [f.id, f] as const));
+  const notable = (m: Model | null) =>
+    m
+      ? [
+          ...m.selected,
+          ...m.effects
+            .filter((e) => e.se > 0 && Math.abs(e.effect) >= 1.5 * e.se)
+            .sort((a, b) => Math.abs(b.effect / b.se) - Math.abs(a.effect / a.se))
+            .map((e) => e.facetId),
+        ]
+      : [];
+  const cols = [...new Set([...notable(all), ...notable(recent)])].filter((id) => byId.has(id) && !byId.get(id)?.interaction).slice(0, 16);
+  const tau2 = all.tau * all.tau;
+  const rows: PreqRow[] = looks.map((l) => {
+    const x: Array<[number, number]> = [
+      [0, 1],
+      [1, l.actual - C_INDEX],
+    ];
+    cols.forEach((id, k) => {
+      if (l.facets.includes(id)) x.push([2 + k, 1]);
+    });
+    return { x, y: l.user - C_INDEX, v: tau2 + l.se * l.se };
+  });
+  const p = 2 + cols.length;
+  const ridge = Float64Array.from({ length: p }, (_, j) => (j < 2 ? 1e-6 : INSIGHT.lambdaMain));
+  const choice = chooseHalfLife(rows, p, ridge);
+  return { ...choice, model: choice.halfLife === Infinity ? all : choice.halfLife === shortest ? recent : undefined };
 }
 
 function passes(e: FacetEffect, f: Facet): boolean {
@@ -245,15 +326,29 @@ function passes(e: FacetEffect, f: Facet): boolean {
   return Math.abs(e.effect) >= INSIGHT.minEffect && Math.abs(e.effect) >= z * e.se && e.nEff >= minN;
 }
 
-function welch(a: number[], b: number[]): { diff: number; t: number } | null {
-  if (a.length < 15 || b.length < 15) return null;
-  const m = (x: number[]) => x.reduce((s, v) => s + v, 0) / x.length;
-  const v = (x: number[], mu: number) => x.reduce((s, y) => s + (y - mu) ** 2, 0) / (x.length - 1);
-  const ma = m(a);
-  const mb = m(b);
-  const se = Math.sqrt(v(a, ma) / a.length + v(b, mb) / b.length);
+/** Weighted mean, variance and Kish effective size; with equal weights, the usual mean and sample variance. */
+function wstats(xs: number[], ds: number[]): { mean: number; v: number; ne: number } {
+  let sw = 0;
+  let sx = 0;
+  for (let i = 0; i < xs.length; i++) {
+    sw += ds[i];
+    sx += ds[i] * xs[i];
+  }
+  const mean = sw > 0 ? sx / sw : 0;
+  let ss = 0;
+  for (let i = 0; i < xs.length; i++) ss += ds[i] * (xs[i] - mean) ** 2;
+  const ne = kish(ds);
+  return { mean, v: ne > 1 && sw > 0 ? ((ss / sw) * ne) / (ne - 1) : 0, ne };
+}
+
+/** Welch's t on decay-weighted samples, each needing an effective size of at least 15. */
+function welch(a: number[], da: number[], b: number[], db: number[]): { diff: number; t: number } | null {
+  const A = wstats(a, da);
+  const B = wstats(b, db);
+  if (A.ne < 15 || B.ne < 15) return null;
+  const se = Math.sqrt(A.v / A.ne + B.v / B.ne);
   if (!(se > 0)) return null;
-  return { diff: ma - mb, t: (ma - mb) / se };
+  return { diff: A.mean - B.mean, t: (A.mean - B.mean) / se };
 }
 
 export interface InsightResult {
@@ -266,13 +361,23 @@ export interface InsightResult {
   weak: Array<{ facetId: string; effect: number; confirmed: boolean }>;
   firstLooks: number;
   needed: number;
+  /** How the evidence decays: the chosen half-life (in first looks), the effective sample and the scored candidates. */
+  memory: { halfLife: number; nEff: number; n: number; scores: HalfLifeChoice['scores'] } | null;
 }
 
-/** Synthesizes the model into a handful of insights ranked by impact (effect × how often the facet comes up). */
-export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare: ReadonlyMap<string, number>): InsightResult {
-  if (looks.length < INSIGHT.minFirstLooks) return { model: null, insights: [], weak: [], firstLooks: looks.length, needed: INSIGHT.minFirstLooks };
-  const model = fitModel(looks, facets);
-  if (!model) return { model: null, insights: [], weak: [], firstLooks: looks.length, needed: INSIGHT.minFirstLooks };
+/**
+ * Synthesizes the model into a handful of insights ranked by impact (effect × how often the facet comes up). Older
+ * first looks count less, at the rate chosen by `chooseMemory` unless `opts.halfLife` fixes it.
+ */
+export function computeInsights(looksIn: FirstLook[], facets: Facet[], facetShare: ReadonlyMap<string, number>, opts: { halfLife?: number } = {}): InsightResult {
+  const none = { model: null, insights: [], weak: [], firstLooks: looksIn.length, needed: INSIGHT.minFirstLooks, memory: null };
+  if (looksIn.length < INSIGHT.minFirstLooks) return none;
+  const looks = [...looksIn].sort((a, b) => a.ts - b.ts);
+  const mem: MemoryChoice = opts.halfLife !== undefined ? { halfLife: opts.halfLife, scores: [], scored: 0 } : chooseMemory(looks, facets);
+  const model = mem.model ?? fitModel(looks, facets, mem.halfLife);
+  if (!model) return none;
+  const d = Array.from(decayWeights(looks.length, model.halfLife));
+  const decays = Number.isFinite(model.halfLife);
   const byId = new Map(facets.map((f) => [f.id, f] as const));
   const card: Insight[] = [];
   const weak: Array<{ facetId: string; effect: number; confirmed: boolean }> = [];
@@ -282,16 +387,16 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
     weak.push({ facetId: f.id, effect: e.effect, confirmed: true });
     const over = e.effect > 0;
     const examples = looks
-      .map((l, i) => ({ l, r: model.residuals[i] }))
+      .map((l, i) => ({ l, r: model.residuals[i], d: d[i] }))
       .filter((x) => x.l.facets.includes(f.id) && (over ? x.r > 0 : x.r < 0))
-      .sort((a, b) => Math.abs(b.r) - Math.abs(a.r))
+      .sort((a, b) => Math.abs(b.r) * b.d - Math.abs(a.r) * a.d)
       .slice(0, 3)
       .map(({ l }) => ({ key: l.key, printingId: l.printingId, user: l.user, actual: l.actual, name: l.name }));
     card.push({
       id: `facet:${f.id}`,
       kind: 'facet',
       headline: `You ${over ? 'overrate' : 'underrate'} ${f.noun} by about ${steps(e.effect)}${letterNote(e.effect)}`,
-      detail: `Compared with your own calibration line, your first looks at ${f.noun} land ${steps(e.effect)} ${over ? 'above' : 'below'} the 17Lands grade, on ${e.n} cards.`,
+      detail: `Compared with your own calibration line, your first looks at ${f.noun} land ${steps(e.effect)} ${over ? 'above' : 'below'} the 17Lands grade, on ${e.n} cards${decays ? ', weighted toward your recent ones' : ''}.`,
       effect: e.effect,
       lo: e.effect - 1.96 * e.se,
       hi: e.effect + 1.96 * e.se,
@@ -323,7 +428,7 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
       lo: model.slope - 1 - 1.96 * model.seSlope,
       hi: model.slope - 1 + 1.96 * model.seSlope,
       n: model.n,
-      nEff: model.n,
+      nEff: model.nEff,
       impact: Math.abs(1 - model.slope) * 3,
       examples: [],
     });
@@ -338,7 +443,7 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
       lo: model.slope - 1 - 1.96 * model.seSlope,
       hi: model.slope - 1 + 1.96 * model.seSlope,
       n: model.n,
-      nEff: model.n,
+      nEff: model.nEff,
       impact: Math.abs(model.slope - 1) * 3,
       examples: [],
     });
@@ -355,7 +460,7 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
       lo: model.intercept - 1.96 * model.seIntercept,
       hi: model.intercept + 1.96 * model.seIntercept,
       n: model.n,
-      nEff: model.n,
+      nEff: model.nEff,
       impact: Math.abs(model.intercept) * 2,
       examples: [],
     });
@@ -371,17 +476,23 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
       lo: model.tau,
       hi: model.tau,
       n: model.n,
-      nEff: model.n,
+      nEff: model.nEff,
       impact: model.tau,
       examples: [],
     });
   }
-  const rts = looks.map((l) => l.rtMs).filter((x) => x > 0);
-  if (rts.length >= 40) {
+  const timed = looks.map((_, i) => i).filter((i) => looks[i].rtMs > 0);
+  const rts = timed.map((i) => looks[i].rtMs);
+  if (kish(timed.map((i) => d[i])) >= 40) {
     const med = [...rts].sort((a, b) => a - b)[Math.floor(rts.length / 2)];
-    const fast = absR.filter((_, i) => looks[i].rtMs > 0 && looks[i].rtMs < med);
-    const slow = absR.filter((_, i) => looks[i].rtMs >= med);
-    const w = welch(fast, slow);
+    const fastI = timed.filter((i) => looks[i].rtMs < med);
+    const slowI = timed.filter((i) => looks[i].rtMs >= med);
+    const w = welch(
+      fastI.map((i) => absR[i]),
+      fastI.map((i) => d[i]),
+      slowI.map((i) => absR[i]),
+      slowI.map((i) => d[i]),
+    );
     if (w && w.diff >= INSIGHT.speedGap && w.t >= INSIGHT.zBehavior) {
       behavior.push({
         id: 'behavior:speed',
@@ -393,15 +504,20 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
         lo: w.diff,
         hi: w.diff,
         n: rts.length,
-        nEff: rts.length,
+        nEff: kish(timed.map((i) => d[i])),
         impact: w.diff * 2,
         examples: [],
       });
     }
   }
-  const early = absR.filter((_, i) => looks[i].seq > 0 && looks[i].seq <= INSIGHT.fatigueEarly);
-  const late = absR.filter((_, i) => looks[i].seq >= INSIGHT.fatigueLate);
-  const fw = welch(late, early);
+  const earlyI = looks.map((_, i) => i).filter((i) => looks[i].seq > 0 && looks[i].seq <= INSIGHT.fatigueEarly);
+  const lateI = looks.map((_, i) => i).filter((i) => looks[i].seq >= INSIGHT.fatigueLate);
+  const fw = welch(
+    lateI.map((i) => absR[i]),
+    lateI.map((i) => d[i]),
+    earlyI.map((i) => absR[i]),
+    earlyI.map((i) => d[i]),
+  );
   if (fw && fw.diff >= INSIGHT.fatigueGap && fw.t >= INSIGHT.zBehavior) {
     behavior.push({
       id: 'behavior:fatigue',
@@ -412,22 +528,28 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
       effect: fw.diff,
       lo: fw.diff,
       hi: fw.diff,
-      n: late.length,
-      nEff: late.length,
+      n: lateI.length,
+      nEff: kish(lateI.map((i) => d[i])),
       impact: fw.diff * 1.5,
       examples: [],
     });
   }
 
   const strengths: Insight[] = [];
-  const overall = absR.reduce((s, x) => s + x, 0) / absR.length;
+  const overall = wstats(absR, d).mean;
   for (const f of facets) {
-    const inF = absR.filter((_, i) => looks[i].facets.includes(f.id));
-    if (inF.length < INSIGHT.strengthMinN || card.some((c) => c.facet?.id === f.id)) continue;
-    const outF = absR.filter((_, i) => !looks[i].facets.includes(f.id));
-    const w = welch(outF, inF);
+    const inI = looks.map((_, i) => i).filter((i) => looks[i].facets.includes(f.id));
+    if (kish(inI.map((i) => d[i])) < INSIGHT.strengthMinN || card.some((c) => c.facet?.id === f.id)) continue;
+    const outI = looks.map((_, i) => i).filter((i) => !looks[i].facets.includes(f.id));
+    const inF = inI.map((i) => absR[i]);
+    const w = welch(
+      outI.map((i) => absR[i]),
+      outI.map((i) => d[i]),
+      inF,
+      inI.map((i) => d[i]),
+    );
     if (!w || w.diff < INSIGHT.strengthGap || w.t < INSIGHT.zStrength) continue;
-    const mIn = inF.reduce((s, x) => s + x, 0) / inF.length;
+    const mIn = wstats(inF, inI.map((i) => d[i])).mean;
     strengths.push({
       id: `strength:${f.id}`,
       kind: 'strength',
@@ -437,7 +559,7 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
       lo: -w.diff,
       hi: -w.diff,
       n: inF.length,
-      nEff: inF.length,
+      nEff: kish(inI.map((i) => d[i])),
       impact: w.diff * (facetShare.get(f.id) ?? 0),
       facet: { id: f.id, label: f.label, noun: f.noun, query: f.query },
       examples: [],
@@ -446,7 +568,7 @@ export function computeInsights(looks: FirstLook[], facets: Facet[], facetShare:
   strengths.sort((a, b) => b.impact - a.impact);
   behavior.sort((a, b) => b.impact - a.impact);
   const insights = [...card.slice(0, INSIGHT.maxCardInsights), ...behavior.slice(0, INSIGHT.maxBehaviors), ...strengths.slice(0, INSIGHT.maxStrengths)];
-  return { model, insights, weak, firstLooks: looks.length, needed: INSIGHT.minFirstLooks };
+  return { model, insights, weak, firstLooks: looks.length, needed: INSIGHT.minFirstLooks, memory: { halfLife: model.halfLife, nEff: model.nEff, n: model.n, scores: mem.scores } };
 }
 
 /**
