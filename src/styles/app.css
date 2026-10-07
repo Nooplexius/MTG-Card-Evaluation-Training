@@ -1206,6 +1206,9 @@
   color: var(--bone-3);
   font-size: var(--fs-caption);
 }
+.memory-note {
+  margin-top: 6px;
+}
 .segmented {
   display: flex;
   gap: 4px;
