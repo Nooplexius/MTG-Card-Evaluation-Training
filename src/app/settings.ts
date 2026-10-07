@@ -14,6 +14,8 @@ export interface Settings {
   showKeyHints: boolean;
   /** Best session share of first looks within one step (sessions with at least 8 first looks). */
   bestFirstLook: number;
+  /** Version of the stored settings, for one-time migrations of changed defaults. */
+  settingsVersion: number;
 }
 
 export const DEFAULTS: Settings = {
@@ -22,13 +24,14 @@ export const DEFAULTS: Settings = {
   haptics: true,
   reducedMotion: 'system',
   sessionLength: 20,
-  mode: 'adaptive',
+  mode: 'random',
   dailyGoal: 30,
   query: '',
   installPromptShown: false,
   lastBackupAt: 0,
   showKeyHints: true,
   bestFirstLook: 0,
+  settingsVersion: 2,
 };
 
 const KEY = 'loupe.settings';
@@ -38,7 +41,11 @@ const listeners = new Set<() => void>();
 function load(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) } : { ...DEFAULTS };
+    if (!raw) return { ...DEFAULTS };
+    const saved = JSON.parse(raw) as Partial<Settings>;
+    // Version 2 made Random the default mode; settings saved before it switch once.
+    if ((saved.settingsVersion ?? 1) < 2) Object.assign(saved, { mode: 'random', settingsVersion: 2 });
+    return { ...DEFAULTS, ...saved };
   } catch {
     return { ...DEFAULTS };
   }

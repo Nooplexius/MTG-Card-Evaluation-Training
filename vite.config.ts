@@ -31,7 +31,7 @@ function staticShell(total: number, synthetic: boolean): string {
     `<div class="route-practice shell"><div class="practice" data-phase="grading">` +
     `<header class="topbar"><button type="button" class="icon-btn" aria-label="Menu">${ICON('M4 7h16M4 12h16M4 17h16')}</button>` +
     `<button type="button" class="filter-chip">${ICON('M4 6h16M7 12h10M10 18h4', 18)}<span class="sr-only">Practice filter: </span><span class="filter-chip__text">All sets</span><span class="filter-chip__count num">${total.toLocaleString('en-US')}</span></button>` +
-    `<button type="button" class="mode-btn" aria-label="Adaptive mode, tap to switch">${ICON('M12 3a9 9 0 100 18 9 9 0 000-18zM12 7a5 5 0 100 10 5 5 0 000-10zM12 11a1 1 0 100 2 1 1 0 000-2z', 18)}<span>Adaptive</span></button></header>` +
+    `<button type="button" class="mode-btn" aria-label="Random mode, tap to switch">${ICON('M4 7h3c4 0 6 10 10 10h3M17 14l3 3-3 3M4 17h3c1.5 0 2.7-1.4 3.8-3.2M14.2 9.2C15.3 7.4 16.5 7 17 7h3M17 4l3 3-3 3', 18)}<span>Random</span></button></header>` +
     `<div class="credit"><span class="credit__count num">1 / 20</span>${credit}<span class="credit__load"></span></div>` +
     `<main class="stage"><div class="card-slot"><div class="card-layout"><div class="card-wrap"><div class="card-deal"><div class="card-box is-loaded">` +
     `<button type="button" class="card-box__hit" aria-label="__NAME__. Open full screen"><img class="card-box__img" src="__URL__" alt="" width="672" height="936" crossorigin="anonymous" fetchpriority="high" decoding="async" draggable="false"></button></div></div></div>` +

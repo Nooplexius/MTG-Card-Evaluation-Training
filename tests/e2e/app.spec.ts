@@ -147,6 +147,16 @@ test('a drill practices only the cards in its facet, past the first queue, and e
   await cardReady(page);
 });
 
+test('Random is the default mode, and a switch to Adaptive is remembered', async ({ page }) => {
+  await page.goto('/');
+  await cardReady(page);
+  await page.getByRole('button', { name: 'Random mode, tap to switch' }).click();
+  await expect(page.getByRole('button', { name: 'Adaptive mode, tap to switch' })).toBeVisible();
+  await page.reload();
+  await cardReady(page);
+  await expect(page.getByRole('button', { name: 'Adaptive mode, tap to switch' })).toBeVisible();
+});
+
 test('every control gives sound, haptic and motion feedback', async ({ page }) => {
   await page.goto('/');
   await cardReady(page);
