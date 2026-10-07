@@ -86,7 +86,13 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
   const currentRef = useRef<Current | null>(current);
   const modeRef = useRef(opts.mode);
   modeRef.current = opts.mode;
+  const drillKeysRef = useRef(opts.drillKeys);
+  drillKeysRef.current = opts.drillKeys;
   currentRef.current = current;
+  /** What the queue was planned for; a refill that finishes under a different filter, mode or drill is discarded. */
+  const planVersion = `${opts.filterVersion}|${opts.mode}|${opts.drillId ?? ''}`;
+  const versionRef = useRef(planVersion);
+  versionRef.current = planVersion;
 
   const persistSession = useCallback((s: Session) => {
     sessionRef.current = s;
@@ -102,7 +108,6 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     return s;
   }, [opts.drillId]);
 
-  const versionRef = useRef(opts.filterVersion);
   const refill = useCallback(async () => {
     if (planning.current) return planning.current;
     const p = (async () => {
@@ -113,7 +118,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
         const version = versionRef.current;
         const exclude = [currentRef.current?.key, ...queue.current.map((q) => q.view.key)].filter((k): k is string => !!k);
         await e.call('waitAll');
-        sels = await e.call('plan', { mode: modeRef.current, n: need, exclude, drillKeys: opts.drillKeys });
+        sels = await e.call('plan', { mode: modeRef.current, n: need, exclude, drillKeys: drillKeysRef.current });
         if (version === versionRef.current) break;
         sels = [];
       }
@@ -129,7 +134,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     } finally {
       planning.current = null;
     }
-  }, [opts.drillKeys]);
+  }, []);
 
   const show = useCallback((c: Current) => {
     setCurrent(c);
@@ -174,6 +179,7 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
         return;
       }
       sessionRef.current = null;
+      queue.current = [];
       persistSession(newSessionRecord(modeRef.current, opts.drillId));
       await refill();
       if (cancelled) return;
@@ -197,11 +203,10 @@ export function usePractice(manifest: Manifest | null, starter: StarterInfo | nu
     persistSession({ ...ses, length: sessionLength });
   }, [sessionLength]);
 
-  // A new filter or mode replans the upcoming cards (the card on screen stays).
+  // A new filter, mode or drill replans the upcoming cards (the card on screen stays).
   useEffect(() => {
-    versionRef.current = opts.filterVersion * 10 + (opts.mode === 'random' ? 1 : 0);
     queue.current = [];
-  }, [opts.filterVersion, opts.mode]);
+  }, [planVersion]);
 
   const markVisible = useCallback(() => {
     setCurrent((c) => (c && c.visibleAt === null ? { ...c, visibleAt: Math.max(Date.now(), c.shownAt + DEAL_MS) } : c));
