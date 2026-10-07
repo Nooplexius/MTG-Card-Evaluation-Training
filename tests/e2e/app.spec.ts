@@ -129,6 +129,34 @@ test('changing the session length applies to the session in progress', async ({ 
   await expect(page.getByRole('heading', { name: 'Session complete' })).toBeVisible();
 });
 
+test('a drill practices only the cards in its facet, past the first queue, and ending it returns to the pool', async ({ page }) => {
+  await page.goto('/');
+  await cardReady(page);
+  await page.goto('/#/insights/drill:type:creature');
+  await expect(page.locator('.filter-chip__text')).toHaveText('Drill · Creatures');
+  for (let i = 0; i < 6; i++) {
+    await cardReady(page);
+    await expect(page.locator('.card-text__type').first()).toBeAttached();
+    const types = await page.locator('.card-text__type').allTextContents();
+    expect(types.join(' // ')).toMatch(/Creature/);
+    await grade(page, 'C');
+    await next(page);
+  }
+  await page.getByRole('button', { name: 'End drill' }).click();
+  await expect(page.locator('.filter-chip__text')).toHaveText('All sets');
+  await cardReady(page);
+});
+
+test('Random is the default mode, and a switch to Adaptive is remembered', async ({ page }) => {
+  await page.goto('/');
+  await cardReady(page);
+  await page.getByRole('button', { name: 'Random mode, tap to switch' }).click();
+  await expect(page.getByRole('button', { name: 'Adaptive mode, tap to switch' })).toBeVisible();
+  await page.reload();
+  await cardReady(page);
+  await expect(page.getByRole('button', { name: 'Adaptive mode, tap to switch' })).toBeVisible();
+});
+
 test('every control gives sound, haptic and motion feedback', async ({ page }) => {
   await page.goto('/');
   await cardReady(page);

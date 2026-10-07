@@ -41,6 +41,7 @@ Status: `[x]` done · `[~]` in progress · `[ ]` to do · `[!]` waiting on the o
 - [x] Adaptive scheduler, Random mode shuffle bag, selection reason + probability
 - [x] Smart feedback (stepwise weighted fit, calibration, behavioral insights) passing the 50 × 400 simulation
 - [x] Drills with mastery, session summaries, streaks, daily goal, personal best
+- [x] Evidence decay: recency weights with a per-user half-life chosen by predictive likelihood, sandwich standard errors
 
 ## M6 · Feel, offline, budgets
 - [x] Feedback layer (sound, haptics, motion) with a coverage test

@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { loadQueryFixtures } from '../../pipeline/corpus.ts';
 import { baseFacets, type Facet } from '../../src/lib/facets.ts';
 import { gradeIndexFromZ, seInSteps } from '../../src/lib/grades.ts';
@@ -8,10 +7,11 @@ import { compile, evaluate } from '../../src/lib/query/engine.ts';
 import { gaussian, seededRng, type Rng } from '../../src/lib/random.ts';
 import { DAY_MS, pickAdaptive, updateAfter, type Candidate, type WeakFacet } from '../../src/lib/scheduler.ts';
 import type { SchedItem } from '../../src/lib/types.ts';
-import { ROOT } from '../helpers/fixtures.ts';
+import { ROOT } from './fixtures.ts';
 
-const USERS = 50;
-const EVALS = 400;
+/** Runs per scenario. The brief asks for at least 50; 150 pins a 2% false-positive rate well below the 5% bar. */
+export const USERS = 150;
+export const EVALS = 400;
 const SESSION = 20;
 
 interface SimEntry {
@@ -26,7 +26,13 @@ interface SimEntry {
   cand: Candidate;
 }
 
-function buildPool(): { entries: SimEntry[]; facets: Facet[]; share: Map<string, number> } {
+let poolCache: ReturnType<typeof buildPoolOnce> | null = null;
+export function buildPool(): ReturnType<typeof buildPoolOnce> {
+  poolCache ??= buildPoolOnce();
+  return poolCache;
+}
+
+function buildPoolOnce(): { entries: SimEntry[]; facets: Facet[]; share: Map<string, number> } {
   const fx = loadQueryFixtures(ROOT);
   const rng = seededRng('sim-pool');
   const lsets = [...new Set(fx.pool.map((e) => e.lset))];
@@ -56,16 +62,27 @@ function buildPool(): { entries: SimEntry[]; facets: Facet[]; share: Map<string,
   return { entries, facets, share };
 }
 
-interface Scenario {
+export interface Scenario {
   name: string;
   slope: number;
   sigma: number;
   offset: number;
   planted: Record<string, number>;
   expect: string[];
+  /** After this many first looks the planted effects become `after` (the user learned or changed). */
+  changeAt?: number;
+  after?: Record<string, number>;
+  evals?: number;
 }
 
-function simulateUser(s: Scenario, u: number, pool: ReturnType<typeof buildPool>): Set<string> {
+export interface SimResult {
+  ids: Set<string>;
+  /** Insights with decay switched off, for comparison. */
+  noDecay: Set<string>;
+  halfLife: number;
+}
+
+export function simulateUser(s: Scenario, u: number, pool: ReturnType<typeof buildPoolOnce>): SimResult {
   const rng: Rng = seededRng(`sim:${s.name}:${u}`);
   const byKey = new Map(pool.entries.map((e) => [e.key, e] as const));
   const candidates = pool.entries.map((e) => e.cand);
@@ -75,10 +92,12 @@ function simulateUser(s: Scenario, u: number, pool: ReturnType<typeof buildPool>
   const looks: FirstLook[] = [];
   let weak: WeakFacet[] = [];
   const judge = (e: SimEntry) => {
-    const effect = s.offset + Object.entries(s.planted).reduce((acc, [f, v]) => acc + (e.facets.includes(f) ? v : 0), 0);
+    const planted = s.changeAt !== undefined && looks.length >= s.changeAt ? (s.after ?? {}) : s.planted;
+    const effect = s.offset + Object.entries(planted).reduce((acc, [f, v]) => acc + (e.facets.includes(f) ? v : 0), 0);
     return Math.max(0, Math.min(12, Math.round(5 + s.slope * (e.trueSteps - 5) + effect + s.sigma * gaussian(rng))));
   };
-  for (let t = 0; t < EVALS; t++) {
+  const evals = s.evals ?? EVALS;
+  for (let t = 0; t < evals; t++) {
     const now = Math.floor(t / SESSION) * DAY_MS * 0.5 + (t % SESSION) * 15_000;
     const pick = pickAdaptive({ trial: t, now, candidates, sched, exposed, recent, weak, exclude: new Set(), rng });
     if (!pick) break;
@@ -90,30 +109,49 @@ function simulateUser(s: Scenario, u: number, pool: ReturnType<typeof buildPool>
     exposed.add(e.oracle);
     recent.push(e.cand);
     if (first) looks.push({ key: e.key, printingId: e.key, user, actual: e.g, se: e.se, facets: e.facets, rtMs, seq: (t % SESSION) + 1, ts: now });
-    if ((t + 1) % 50 === 0 && t + 1 < EVALS) {
+    if ((t + 1) % 50 === 0 && t + 1 < evals) {
       const r = computeInsights(looks, pool.facets, pool.share);
       weak = r.weak.slice(0, 4).map((w) => ({ id: w.facetId, weight: Math.abs(w.effect), keys: new Set(pool.entries.filter((x) => x.facets.includes(w.facetId)).map((x) => x.key)) }));
     }
   }
-  return new Set(computeInsights(looks, pool.facets, pool.share).insights.map((i) => i.id));
+  const final = computeInsights(looks, pool.facets, pool.share);
+  return {
+    ids: new Set(final.insights.map((i) => i.id)),
+    noDecay: new Set(computeInsights(looks, pool.facets, pool.share, { halfLife: Infinity }).insights.map((i) => i.id)),
+    halfLife: final.memory?.halfLife ?? Infinity,
+  };
 }
 
-const SCENARIOS: Scenario[] = [
+export const SCENARIOS: Scenario[] = [
   { name: 'red-compressed', slope: 0.6, sigma: 1.2, offset: 0, planted: { 'color:r': 2 }, expect: ['facet:color:r', 'behavior:compression'] },
   { name: 'removal-optimist', slope: 1, sigma: 1.2, offset: 0.8, planted: { 'tag:removal': -1.5 }, expect: ['facet:tag:removal', 'behavior:optimism'] },
   { name: 'null', slope: 1, sigma: 1.2, offset: 0, planted: {}, expect: [] },
 ];
 
-describe('smart feedback: 50 simulated users × 400 evaluations through the real scheduler', () => {
+export const halfLifeReport = (hs: number[]) =>
+  [...new Set(hs)]
+    .sort((a, b) => b - a)
+    .map((h) => `${Number.isFinite(h) ? h : 'none'}×${hs.filter((x) => x === h).length}`)
+    .join(' ');
+
+/**
+ * Runs one stationary scenario through the real scheduler and checks the brief's bar: each planted effect in at least
+ * 90% of runs, any other insight in at most 5%, and, since nothing changes over time, full memory in most runs.
+ */
+export function checkScenario(name: string, expect: (actual: number, msg?: string) => { toBeGreaterThanOrEqual(n: number): void; toBeLessThanOrEqual(n: number): void }): void {
+  const s = SCENARIOS.find((x) => x.name === name) as Scenario;
   const pool = buildPool();
-  for (const s of SCENARIOS) {
-    it(`${s.name}: planted effects found in ≥ 90% of runs, any other insight in ≤ 5%`, () => {
-      const counts = new Map<string, number>();
-      for (let u = 0; u < USERS; u++) for (const id of simulateUser(s, u, pool)) counts.set(id, (counts.get(id) ?? 0) + 1);
-      const report = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => `${id}=${n}`);
-      console.log(`${s.name} (of ${USERS} runs): ${report.join(', ') || 'no insights'}`);
-      for (const id of s.expect) expect(counts.get(id) ?? 0, `${id} in ${report.join(', ')}`).toBeGreaterThanOrEqual(Math.ceil(0.9 * USERS));
-      for (const [id, n] of counts) if (!s.expect.includes(id)) expect(n, `unplanted ${id} in ${report.join(', ')}`).toBeLessThanOrEqual(Math.floor(0.05 * USERS));
-    });
+  const counts = new Map<string, number>();
+  const halfLives: number[] = [];
+  for (let u = 0; u < USERS; u++) {
+    const r = simulateUser(s, u, pool);
+    halfLives.push(r.halfLife);
+    for (const id of r.ids) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
-});
+  const report = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => `${id}=${n}`);
+  console.log(`${s.name} (of ${USERS} runs): ${report.join(', ') || 'no insights'} · half-lives ${halfLifeReport(halfLives)}`);
+  for (const id of s.expect) expect(counts.get(id) ?? 0, `${id} in ${report.join(', ')}`).toBeGreaterThanOrEqual(Math.ceil(0.9 * USERS));
+  for (const [id, n] of counts) if (!s.expect.includes(id)) expect(n, `unplanted ${id} in ${report.join(', ')}`).toBeLessThanOrEqual(Math.floor(0.05 * USERS));
+  // A user whose grading doesn't change keeps all of their evidence, so decay costs them no power.
+  expect(halfLives.filter((h) => h === Infinity).length, `half-lives ${halfLifeReport(halfLives)}`).toBeGreaterThanOrEqual(Math.ceil(0.8 * USERS));
+}

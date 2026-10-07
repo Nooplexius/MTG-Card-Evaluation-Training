@@ -1,6 +1,6 @@
 # Loupe: a Limited card-evaluation trainer
 
-Loupe is a mobile-first web app (installable, works offline) for practicing Magic: The Gathering Limited card evaluation. It shows a card from a current Standard-legal Limited format, you grade it on 17Lands' 13-step scale (F to A+), and it reveals the card's real grade, its GIH WR and why it performed that way. It schedules cards adaptively, tracks how accurate your first look at an unseen card is, and points out patterns in your misses, such as underrating removal or a color. No account, ads or trackers; progress stays on the device and can be exported as a backup file.
+Loupe is a mobile-first web app (installable, works offline) for practicing Magic: The Gathering Limited card evaluation. It shows a card from a current Standard-legal Limited format, you grade it on 17Lands' 13-step scale (F to A+), and it reveals the card's real grade, its GIH WR and why it performed that way. It deals cards at random by default (or schedules them adaptively, one tap away), runs drills on your weak spots, tracks how accurate your first look at an unseen card is, and points out patterns in your misses, such as underrating removal or a color. When your grading changes, older evidence fades at a rate chosen from your own data, so insights follow the player you are now. No account, ads or trackers; progress stays on the device and can be exported as a backup file.
 
 Live site, once deployed: <https://nooplexius.github.io/MTG-Card-Evaluation-Training/>
 

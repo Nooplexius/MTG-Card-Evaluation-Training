@@ -43,8 +43,19 @@ jobs:
           restore-keys: inputs-
       - name: Build data (never contacts 17Lands)
         run: npx tsx pipeline/cli.ts build --no-17lands
+      - name: Playwright browser cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 15
+        run: |
+          for attempt in 1 2 3; do
+            timeout 240 npx playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $attempt failed or stalled; retrying"
+          done
+          exit 1
       - name: End-to-end tests on phone viewports
         run: npx playwright test --project=mobile --project=small
       - uses: actions/upload-artifact@v7
@@ -79,8 +90,19 @@ jobs:
           restore-keys: inputs-
       - name: Build data (never contacts 17Lands)
         run: npx tsx pipeline/cli.ts build --no-17lands
+      - name: Playwright browser cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 15
+        run: |
+          for attempt in 1 2 3; do
+            timeout 240 npx playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $attempt failed or stalled; retrying"
+          done
+          exit 1
       - name: Core-loop budgets under 4x CPU throttling
         run: npx playwright test --project=budgets
       - name: Lighthouse mobile audit of a cold first visit (median of 3 runs)

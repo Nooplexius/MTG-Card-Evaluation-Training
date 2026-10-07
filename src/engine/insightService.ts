@@ -16,6 +16,8 @@ export interface InsightsView {
   firstLooks: number;
   needed: number;
   calibration: { slope: number; intercept: number; tau: number } | null;
+  /** How fast older first looks lose weight (see lib/decay.ts). */
+  memory: InsightResult['memory'];
   drills: DrillView[];
 }
 
@@ -87,6 +89,7 @@ export class InsightService {
         firstLooks: result.firstLooks,
         needed: result.needed,
         calibration: result.model ? { slope: result.model.slope, intercept: result.model.intercept, tau: result.model.tau } : null,
+        memory: result.memory,
         drills: drills.map((d) => ({ ...d, progress: result.model ? drillProgress(result.model as Model, looks, d.facetId, d.startedAt) : null })),
       };
     })();

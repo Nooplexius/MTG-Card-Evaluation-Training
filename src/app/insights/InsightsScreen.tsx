@@ -90,6 +90,21 @@ function InsightCard({ ins, onExample, index }: { ins: Insight; onExample: (key:
   );
 }
 
+/** How older first looks are weighted, in plain words. */
+function MemoryNote({ memory }: { memory: NonNullable<InsightsView['memory']> }) {
+  if (Number.isFinite(memory.halfLife)) {
+    return (
+      <p className="field__note memory-note">
+        Recent first looks count more: one counts half after {memory.halfLife} newer ones, so these results rest on about {Math.round(memory.nEff)} effective first looks of {memory.n}. Loupe picked this rate because it predicts your next grades better than weighing everything equally; the evidence bar accounts for the smaller effective sample.
+      </p>
+    );
+  }
+  if (memory.scores.length > 0) {
+    return <p className="field__note memory-note">All {memory.n} first looks count fully: your grading has been steady enough that older ones still describe you.</p>;
+  }
+  return null;
+}
+
 export function InsightsScreen() {
   const { param } = useRoute();
   const [view, setView] = useState<InsightsView | null>(null);
@@ -119,7 +134,7 @@ export function InsightsScreen() {
   const strengths = view?.insights.filter((i) => i.kind === 'strength') ?? [];
   return (
     <div className="screen insights">
-      <ScreenHead title="Insights" sub={view ? `From ${view.firstLooks} first looks` : 'Working…'} />
+      <ScreenHead title="Insights" sub={view ? `From ${view.firstLooks} first looks${view.memory && Number.isFinite(view.memory.halfLife) ? ', recent ones weighted more' : ''}` : 'Working…'} />
       {view && view.firstLooks < view.needed && (
         <p className="notice">
           Insights need at least {view.needed} first looks to separate real patterns from noise; you have {view.firstLooks}. A few more sessions will do it.
@@ -131,6 +146,7 @@ export function InsightsScreen() {
           Your calibration: slope {view.calibration.slope.toFixed(2)} (1 is ideal), offset at C {sgn(view.calibration.intercept)} steps, scatter ±{view.calibration.tau.toFixed(1)} steps.
         </p>
       )}
+      {view?.memory && <MemoryNote memory={view.memory} />}
       {cards.length > 0 && <h2 className="section-title smallcaps">Weak spots</h2>}
       {cards.map((ins, i) => (
         <InsightCard key={ins.id} ins={ins} index={i} onExample={(k, p) => void open(k, p)} />
