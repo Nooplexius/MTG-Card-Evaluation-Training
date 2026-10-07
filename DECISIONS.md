@@ -86,3 +86,16 @@ Judgment calls where the brief left room, or where live sources differed from it
 
 32. **Random is the default mode.** New installs start in Random. Settings saved before this change move to Random once (settings version 2). Choosing Adaptive afterwards is kept, and restoring a backup keeps that backup's mode. The static first screen shows Random too.
 33. **Drills started empty.** Starting a drill created its session and asked the planner to fill the card queue. The planner still saw three cards queued from the normal session, so it planned nothing. The "filter or mode changed" effect then emptied the queue, and the drill showed "No cards match this filter." A new session now clears the queue first. The planner reads the current drill's cards through a ref, so the commit and next-card handlers, created once, no longer plan with the cards from before the drill. A planning result made under a different filter, mode or drill is discarded.
+
+## Owner request, 2026-10-07: evidence that decays
+
+34. **How old evidence fades.** Insights, drills and the scheduler's weak-spot targeting now weight first looks by recency, without giving up valid significance tests.
+    - **Clock:** practice, not calendar time. A first look's weight halves after `h` newer first looks, because practice is what changes skill; time away alone erases nothing.
+    - **Choosing h:** each candidate half-life (none, 1600, 800, 400, 200, 100) is scored by its one-step-ahead predictive log-likelihood: refit every 20 first looks on earlier ones only, then predict the next. This is how a dynamic linear model's discount factor is chosen. The predictive variance includes the fit's own uncertainty, so a short memory pays for having less data.
+      - The scoring model is the calibration line plus the facets that stand out with no decay or with the shortest memory. That way both a fading old bias and an emerging new one can make a shorter memory predict better.
+      - Loupe keeps the longest half-life within one standard error of the best, using block totals for the standard errors.
+      - Below 150 first looks nothing decays.
+    - **Significance:** decay multiplies each first look's precision weight. Standard errors come from the sandwich G (Xᵀ diag(w·d) X + Λ) G, and dispersion and τ² use Kish effective sizes, so down-weighting data is charged as lost information. The evidence bars apply to effective sizes. Behavior and strength tests are Welch tests on decay-weighted samples. With nothing decaying, every formula reduces to the previous one.
+    - **The floor:** a half-life of 100 still leaves about 290 effective first looks.
+    - **Validation:** on 150 simulated users per steady scenario, planted effects are found 150/150 and no unplanted insight exceeds 4/150, the same as without decay. Full memory is kept in 140–143 of 150 runs. In the improver scenario (red overrated by 2 steps for the first 200 first looks, then not), the stale insight survives in 3 of 30 runs with decay and 30 of 30 without.
+    - **Simulation size:** the simulation now runs 150 users per scenario; the brief asks for at least 50. Over 150 runs, the worst false-positive rate per facet is about 2%, but with 50 runs such a facet appears 3 or more times (over the 2/50 bar) about 8% of the time, which made the check flaky.
