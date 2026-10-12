@@ -1,7 +1,13 @@
 {
-  "sets": {},
+  "sets": {
+    "FRA": {
+      "date": "2026-10-12",
+      "status": "ok",
+      "httpStatus": 200
+    }
+  },
   "filters": {
-    "date": "2026-10-11",
+    "date": "2026-10-12",
     "status": "ok",
     "httpStatus": 200
   }
