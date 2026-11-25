@@ -18,6 +18,8 @@ npm run dev      # http://localhost:5173
 
 `npm run status` prints each set's state, source, data date and card count, any unmatched cards, and export links for missing or stale sets. It never writes files.
 
+If the public `cards.csv` download returns HTTP 403, the build uses the cached card IDs, or the committed lookup subset on a fresh checkout. The scheduled job still fetches ratings for eligible live sets.
+
 ## Add or refresh 17Lands exports
 
 1. Run `npm run status` and open the export link for the set. It opens 17Lands' Card Data table with every column group on.

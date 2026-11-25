@@ -5,8 +5,8 @@ import type { Manifest, SetFile, StatusFile } from '../src/lib/data.ts';
 import { computeBuild, standardAnalysis, type ComputeOutput, type FetchSummary, type PipelineConfig } from './compute.ts';
 import { discoverExports, loadSnapshots } from './exports/discover.ts';
 import { eligibility } from './eligibility.ts';
-import { CARDS_CSV_URL, indexCardsCsv, parseCardsCsv } from './inputs/cardsCsv.ts';
-import { SharedInputError, getJson } from './inputs/http.ts';
+import { indexCardsCsv, loadCardsCsv } from './inputs/cardsCsv.ts';
+import { cachedJson, getJson } from './inputs/http.ts';
 import { bulkFile, loadCards, loadKeywordCatalog, loadOracleTags, loadSets, SCRYFALL_HEADERS, type ScryCard, type ScrySet } from './inputs/scryfall.ts';
 import { dailyFetch, pruneSnapshots, readFetchState, readLatestFilters, releaseDatesFrom, type DataBranch } from './inputs/seventeen.ts';
 import type { WisResponse } from './inputs/standard.ts';
@@ -40,21 +40,6 @@ export function userAgent(cfg: PipelineConfig): string {
   return `${cfg.appName}/1.0 (+${cfg.appUrl}; Limited card-evaluation trainer; one request per active set per day)`;
 }
 
-async function loadText(url: string, path: string, offline: boolean, maxAgeHours: number): Promise<string> {
-  const { statSync } = await import('node:fs');
-  if (existsSync(path)) {
-    const age = (Date.now() - statSync(path).mtimeMs) / 3_600_000;
-    if (offline || age < maxAgeHours) return readFileSync(path, 'utf8');
-  }
-  if (offline) throw new SharedInputError(`Offline and no cached copy of ${url}`);
-  const res = await fetch(url, { headers: { 'User-Agent': SCRYFALL_HEADERS['User-Agent'] } });
-  if (!res.ok) throw new SharedInputError(`GET ${url} returned HTTP ${res.status}`);
-  const text = await res.text();
-  mkdirSync(join(path, '..'), { recursive: true });
-  writeFileSync(path, text);
-  return text;
-}
-
 export interface SharedInputs {
   wis: WisResponse;
   scrySets: ScrySet[];
@@ -64,11 +49,10 @@ export interface SharedInputs {
   keywords: string[];
 }
 
-/** Loads every shared input; any failure is fatal for the run. With `cardsCsvFallback`, cards.csv is never downloaded. */
-export async function loadSharedInputs(opts: { cacheDir: string; offline: boolean; today: string; setsCfg: SetsConfig; cardsCsvFallback?: string; log?: (m: string) => void }): Promise<SharedInputs> {
+export async function loadSharedInputs(opts: { cacheDir: string; offline: boolean; today: string; setsCfg: SetsConfig; no17Lands?: boolean; cardsCsvFallback?: string; log?: (m: string) => void }): Promise<SharedInputs> {
   const scryDir = join(opts.cacheDir, 'scryfall');
   const wisPath = join(opts.cacheDir, 'wis-standard.json');
-  const wis = JSON.parse(await loadText('https://whatsinstandard.com/api/v6/standard.json', wisPath, opts.offline, 6)) as WisResponse;
+  const wis = await cachedJson<WisResponse>('https://whatsinstandard.com/api/v6/standard.json', wisPath, SCRYFALL_HEADERS, 6, opts.offline);
   const scrySets = await loadSets(scryDir, opts.offline);
   const cardsPath = await bulkFile('default_cards', scryDir, opts.offline);
   const tagsPath = await bulkFile('oracle_tags', scryDir, opts.offline);
@@ -81,13 +65,9 @@ export async function loadSharedInputs(opts: { cacheDir: string; offline: boolea
   const cards = await loadCards(cardsPath, (c) => c.lang === 'en' && (relevant.has(c.set) || recentStd.has(c.set) || typeof c.arena_id === 'number'));
   const tags = await loadOracleTags(tagsPath);
   const csvPath = join(opts.cacheDir, '17lands', 'cards.csv');
-  let csvText: string;
-  if (opts.cardsCsvFallback) {
-    const local = existsSync(csvPath) ? csvPath : opts.cardsCsvFallback;
-    opts.log?.(`cards.csv read from ${local === csvPath ? 'the input cache' : 'the committed test subset'} (17Lands is not contacted).`);
-    csvText = readFileSync(local, 'utf8');
-  } else csvText = await loadText(CARDS_CSV_URL, csvPath, opts.offline, 24);
-  const cardsCsv = indexCardsCsv(parseCardsCsv(csvText));
+  const cardsCsv = indexCardsCsv(await loadCardsCsv(csvPath, {
+    offline: opts.offline, no17Lands: opts.no17Lands, fallbackPath: opts.cardsCsvFallback, log: opts.log,
+  }));
   const keywords = await loadKeywordCatalog(scryDir, opts.offline);
   return { wis, scrySets, cards, tags, cardsCsv, keywords };
 }
@@ -140,7 +120,8 @@ export async function runBuild(opts: RunOptions): Promise<{ out: ComputeOutput; 
     offline: opts.offline,
     today: opts.today,
     setsCfg,
-    cardsCsvFallback: opts.no17Lands ? join(opts.root, 'tests/fixtures/17lands/cards.csv') : undefined,
+    no17Lands: opts.no17Lands,
+    cardsCsvFallback: join(opts.root, 'tests/fixtures/17lands/cards.csv'),
     log: say,
   });
   const db: DataBranch | null = opts.dataBranch ? { root: opts.dataBranch } : null;
