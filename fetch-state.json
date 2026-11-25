@@ -1,18 +1,23 @@
 {
   "sets": {
     "FRA": {
-      "date": "2026-11-22",
+      "date": "2026-11-25",
       "status": "ok",
       "httpStatus": 200
     },
     "TDM": {
-      "date": "2026-11-22",
+      "date": "2026-11-25",
+      "status": "ok",
+      "httpStatus": 200
+    },
+    "TRK": {
+      "date": "2026-11-25",
       "status": "ok",
       "httpStatus": 200
     }
   },
   "filters": {
-    "date": "2026-11-22",
+    "date": "2026-11-25",
     "status": "ok",
     "httpStatus": 200
   }
